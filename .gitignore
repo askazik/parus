@@ -4,3 +4,4 @@ P14X3M01.HEX
 *.exe
 *.asv
 *.*~
+*.lock

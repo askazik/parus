@@ -1,8 +1,9 @@
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Редактор Spyder
-
 Проверка работы с memory mapping средствами numpy.
+
+Отладка в Emacs: (M-x pdb) -> (py -m pdb <filename>)
 """
 import sys
 import numpy as np

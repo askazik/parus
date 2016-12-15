@@ -1,0 +1,79 @@
+;; -*- mode: emacs-lisp; coding: emacs-mule; -*-
+;; --------------------------------------------------------------------------
+;; Desktop File for Emacs
+;; --------------------------------------------------------------------------
+;; Created Thu Dec 15 12:01:51 2016
+;; Desktop file format version 208
+;; Emacs version 25.1.1
+
+;; Global section:
+(setq desktop-saved-frameset [frameset 1 (22610 23551 309511 200000) (desktop . "208") "ASK@AISKAZIK-W" nil nil ((((font-backend uniscribe gdi) (font . "-outline-Courier New-normal-normal-normal-mono-13-*-*-*-c-*-iso8859-1") (border-width . 2) (internal-border-width . 0) (right-divider-width . 0) (bottom-divider-width . 0) (vertical-scroll-bars . right) (horizontal-scroll-bars) (foreground-color . "SystemWindowText") (background-color . "SystemWindow") (mouse-color . "black") (border-color . "black") (screen-gamma) (line-spacing) (left-fringe . 8) (right-fringe . 8) (alpha) (menu-bar-lines . 1) (tool-bar-lines . 3) (height . 58) (title) (icon-type) (auto-raise) (auto-lower) (cursor-type . box) (scroll-bar-width . 17) (scroll-bar-height . 0) (fullscreen . maximized) (display-type . color) (background-mode . light) (cursor-color . "black") (environment) (frameset--id . "F283-22DD-3CD6-02D6") (frameset--mini t . t) (modeline . t) (minibuffer . t) (unsplittable) (icon-name) (display . "w32") (explicit-name) (tool-bar-position . top) (visibility . t) (width . 205) (left + -8) (top + -8)) ((min-height . 8) (min-width . 20) (min-height-ignore . 4) (min-width-ignore . 20) (min-height-safe . 2) (min-width-safe . 4) (min-pixel-height . 128) (min-pixel-width . 160) (min-pixel-height-ignore . 64) (min-pixel-width-ignore . 160) (min-pixel-height-safe . 32) (min-pixel-width-safe . 32)) hc (pixel-width . 1680) (pixel-height . 915) (total-width . 210) (total-height . 57) (normal-height . 1.0) (normal-width . 1.0) (combination-limit) (leaf (pixel-width . 959) (pixel-height . 915) (total-width . 120) (total-height . 57) (normal-height . 1.0) (normal-width . 0.5705794947994056) (buffer "parsefrq.py" (selected) (hscroll . 0) (fringes 8 8 nil) (margins 3) (scroll-bars nil 3 t nil 0 t) (vscroll . 0) (dedicated) (point . 1192) (start . 1))) (vc (last . t) (pixel-width . 721) (pixel-height . 915) (total-width . 90) (total-height . 57) (normal-height . 1.0) (normal-width . 0.4294205052005943) (combination-limit) (leaf (pixel-width . 721) (pixel-height . 451) (total-width . 90) (total-height . 28) (normal-height . 0.5) (normal-width . 1.0) (buffer ".emacs" (selected . t) (hscroll . 0) (fringes 8 8 nil) (margins 3) (scroll-bars nil 3 t nil 0 t) (vscroll . 0) (dedicated) (point . 2271) (start . 1521))) (leaf (last . t) (pixel-width . 721) (pixel-height . 464) (total-width . 90) (total-height . 29) (normal-height . 0.5) (normal-width . 1.0) (buffer "*eshell*" (selected) (hscroll . 0) (fringes 8 8 nil) (margins 3) (scroll-bars nil 3 t nil 0 t) (vscroll . 0) (dedicated) (point . 680) (start . 1))))))])
+(setq desktop-missing-file-warning nil)
+(setq tags-file-name nil)
+(setq tags-table-list nil)
+(setq search-ring nil)
+(setq regexp-search-ring nil)
+(setq register-alist nil)
+(setq file-name-history '("~" "d:/prg/parus/frq" "d:/prg/parus" "d:/prg/2017/parus/" "d:/prg/2017/parus/frq" "~" "d:/prg/2017/parus/frq"))
+
+;; Buffer section -- buffers listed in same order as in buffer list:
+(desktop-create-buffer 208
+  "c:/Users/ASK/AppData/Roaming/.emacs"
+  ".emacs"
+  'emacs-lisp-mode
+  '(visual-line-mode global-whitespace-mode linum-mode)
+  2271
+  '(2232 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . cp866-unix) (truncate-lines))
+  '((mark-ring (2271))))
+
+(desktop-create-buffer 208
+  nil
+  "Roaming"
+  'dired-mode
+  '(visual-line-mode global-whitespace-mode linum-mode)
+  620
+  '(nil nil)
+  t
+  '("c:/Users/ASK/AppData/Roaming/")
+  '((truncate-lines))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "d:/prg/parus/frq/parsefrq.py"
+  "parsefrq.py"
+  'python-mode
+  '(visual-line-mode global-whitespace-mode linum-mode outline-minor-mode)
+  1192
+  '(4 nil)
+  nil
+  nil
+  '((tab-width . 4) (indent-tabs-mode) (buffer-file-coding-system . utf-8-dos) (truncate-lines))
+  '((mark-ring (4 1 1 1 52 1294 52 106 1 1 1 1 1 1 1 727))))
+
+(desktop-create-buffer 208
+  nil
+  "frq"
+  'dired-mode
+  '(visual-line-mode global-whitespace-mode linum-mode)
+  220
+  '(nil nil)
+  t
+  '("d:/prg/parus/frq/")
+  '((truncate-lines))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "parus"
+  'dired-mode
+  '(visual-line-mode global-whitespace-mode linum-mode)
+  217
+  '(nil nil)
+  t
+  '("d:/prg/parus/")
+  '((truncate-lines))
+  '((mark-ring nil)))
+
