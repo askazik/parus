@@ -33,11 +33,12 @@ class headerFrq:
                             ('wday','i'), # days since Sunday	0-6
                             ('yday','i'), # days since January 1	0-365
                             ('isdst','i')]), # Daylight Saving Time flag
-                       ('height_min', 'I'), # начальная высота, км (всё, что ниже при обработке отбрасывается)
-                       ('height_max', 'I'), # конечная высота, км (всё, что выше при обработке отбрасывается)
-                       ('height_step', 'I'), # шаг по высоте, м (реальный шаг, вычисленный по частоте АЦП)
-                       ('count_height', 'I'), # число высот (размер исходного буфера АЦП при зондировании, fifo нашего АЦП 4Кб. Т.е. не больше 1024 отсчётов для двух квадратурных каналов)
-                       ('count_modules', 'I')]) # количество модулей/частот зондирования
+                        ('height_min', 'I'), # начальная высота, км (всё, что ниже при обработке отбрасывается)
+                        ('height_max', 'I'), # конечная высота, км (всё, что выше при обработке отбрасывается)
+                        ('height_step', 'I'), # шаг по высоте, м (реальный шаг, вычисленный по частоте АЦП)
+                        ('count_height', 'I'), # число высот (размер исходного буфера АЦП при зондировании, fifo нашего АЦП 4Кб. Т.е. не больше 1024 отсчётов для двух квадратурных каналов)
+                        ('count_modules', 'I'), # количество модулей/частот зондирования
+                        ('pulse_frq','I')]) # частота зондирующих импульсов, Гц
         self.__header = np.fromfile(self.__file, _dtype, count=1)
         t = self.__header['time']
         tt = (t['year'][0], t['mon'][0], t['mday'][0],
@@ -46,7 +47,10 @@ class headerFrq:
         self.__time = time.struct_time(tt)
         # Считываем частоты зондирования, Гц
         count_modules = self.__header['count_modules'][0]
-        frqs = np.fromfile(self.__file, np.dtype(np.uint32), count_modules)
+        self.__frqs = np.fromfile(self.__file,
+                                      np.dtype(np.uint32),
+                                      count_modules)
+        self.__datapos = self.__file.tell()
 
 class parusFrq(np.memmap):
     "Класс для работы с данными многочастотных измерений амплитуд."
