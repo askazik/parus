@@ -2,19 +2,19 @@
 ;; --------------------------------------------------------------------------
 ;; Desktop File for Emacs
 ;; --------------------------------------------------------------------------
-;; Created Thu Dec 15 23:17:20 2016
-;; Desktop file format version 206
-;; Emacs version 24.5.1
+;; Created Fri Dec 16 15:30:38 2016
+;; Desktop file format version 208
+;; Emacs version 25.1.1
 
 ;; Global section:
-(setq desktop-saved-frameset [frameset 1 (22610 64080 394000 0) (desktop . "206") "ask@ASK-PC" nil nil ((((font-backend uniscribe gdi) (font . "-outline-Courier New-normal-normal-normal-mono-13-*-*-*-c-*-iso8859-1") (border-width . 2) (internal-border-width . 0) (right-divider-width . 0) (bottom-divider-width . 0) (vertical-scroll-bars . right) (foreground-color . "SystemWindowText") (background-color . "SystemWindow") (mouse-color . "black") (border-color . "black") (screen-gamma) (line-spacing) (left-fringe . 8) (right-fringe . 8) (alpha) (menu-bar-lines . 1) (tool-bar-lines . 3) (title) (fullscreen . maximized) (icon-type) (auto-raise) (auto-lower) (cursor-type . box) (scroll-bar-width . 17) (horizontal-scroll-bars . t) (display-type . color) (background-mode . light) (cursor-color . "black") (environment) (frameset--id . "56F7-E83F-87D6-6BDE") (frameset--mini t . t) (modeline . t) (minibuffer . t) (unsplittable) (icon-name) (display . "w32") (explicit-name) (tool-bar-position . top) (visibility . t) (height . 42) (width . 166) (left + -8) (top + -8)) ((min-height . 4) (min-width . 20) (min-height-ignore . 4) (min-width-ignore . 14) (min-height-safe . 1) (min-width-safe . 4) (min-pixel-height . 64) (min-pixel-width . 160) (min-pixel-height-ignore . 64) (min-pixel-width-ignore . 112) (min-pixel-height-safe . 16) (min-pixel-width-safe . 32)) hc (pixel-width . 1366) (pixel-height . 622) (total-width . 171) (total-height . 38) (normal-height . 1.0) (normal-width . 1.0) (combination-limit) (leaf (pixel-width . 787) (pixel-height . 622) (total-width . 98) (total-height . 38) (normal-height . 1.0) (normal-width . 0.579102281089036) (buffer "*Packages*" (selected) (hscroll . 0) (fringes 8 8 nil) (margins 3) (scroll-bars 17 3 t nil) (vscroll . 0) (dedicated) (point . 1) (start . 1))) (leaf (last . t) (pixel-width . 579) (pixel-height . 622) (total-width . 73) (total-height . 38) (normal-height . 1.0) (normal-width . 0.4208977189109635) (buffer ".emacs" (selected) (hscroll . 0) (fringes 8 8 nil) (margins 3) (scroll-bars 17 3 t nil) (vscroll . 0) (dedicated) (point . 826) (start . 432)))))])
+(setq desktop-saved-frameset [frameset 1 (22611 56942 572170 900000) (desktop . "208") "ASK@AISKAZIK-W" nil nil ((((font-backend uniscribe gdi) (font . "-outline-Courier New-normal-normal-normal-mono-13-*-*-*-c-*-iso8859-1") (border-width . 2) (internal-border-width . 0) (right-divider-width . 0) (bottom-divider-width . 0) (vertical-scroll-bars . right) (horizontal-scroll-bars) (foreground-color . "#eeeeec") (background-color . "#2e3434") (mouse-color . "black") (border-color . "black") (screen-gamma) (line-spacing) (left-fringe . 8) (right-fringe . 8) (alpha) (menu-bar-lines . 1) (tool-bar-lines . 3) (height . 58) (title) (icon-type) (auto-raise) (auto-lower) (cursor-type . box) (scroll-bar-width . 17) (scroll-bar-height . 0) (fullscreen . maximized) (display-type . color) (background-mode . dark) (cursor-color . "#fce94f") (environment) (frameset--id . "70C0-D9E2-4C5E-C7D1") (frameset--mini t . t) (modeline . t) (minibuffer . t) (unsplittable) (icon-name) (display . "w32") (explicit-name) (tool-bar-position . top) (visibility . t) (width . 205) (left + -8) (top + -8)) ((min-height . 4) (min-width . 21) (min-height-ignore . 2) (min-width-ignore . 21) (min-height-safe . 1) (min-width-safe . 4) (min-pixel-height . 64) (min-pixel-width . 168) (min-pixel-height-ignore . 32) (min-pixel-width-ignore . 168) (min-pixel-height-safe . 16) (min-pixel-width-safe . 32)) hc (pixel-width . 1680) (pixel-height . 915) (total-width . 210) (total-height . 57) (normal-height . 1.0) (normal-width . 1.0) (combination-limit) (leaf (pixel-width . 839) (pixel-height . 915) (total-width . 105) (total-height . 57) (normal-height . 1.0) (normal-width . 0.49925705794947994) (buffer "parsefrq.py" (selected) (hscroll . 0) (fringes 8 8 nil) (margins 3) (scroll-bars nil 3 t nil 0 t) (vscroll . 0) (dedicated) (point . 1009) (start . 1009))) (leaf (last . t) (pixel-width . 841) (pixel-height . 915) (total-width . 105) (total-height . 57) (normal-height . 1.0) (normal-width . 0.5007429420505201) (buffer ".emacs" (selected . t) (hscroll . 0) (fringes 8 8 nil) (margins 4) (scroll-bars nil 3 t nil 0 t) (vscroll . 0) (dedicated) (point . 2500) (start . 2126)))))])
 (setq desktop-missing-file-warning nil)
 (setq tags-file-name nil)
 (setq tags-table-list nil)
 (setq search-ring '("autocomplete"))
 (setq regexp-search-ring nil)
 (setq register-alist nil)
-(setq file-name-history '("d:/prg/parus/frq" "~" "d:/prg/parus/frq" "~" "d:/prg/parus/frq" "d:/prg/parus" "d:/prg/2017/parus/" "d:/prg/2017/parus/frq" "~" "d:/prg/2017/parus/frq"))
+(setq file-name-history '("d:/prg/parus/frq" "~/" "~"))
 
 ;; Buffer section -- buffers listed in same order as in buffer list:
 (desktop-create-buffer 206
@@ -32,32 +32,47 @@
   "c:/Users/ask/AppData/Roaming/.emacs"
   ".emacs"
   'emacs-lisp-mode
-  '(visual-line-mode global-auto-revert-mode global-whitespace-mode linum-mode)
-  826
-  '(794 nil)
+  '(visual-line-mode global-auto-revert-mode global-whitespace-mode linum-mode auto-complete-mode)
+  2500
+  '(2465 nil)
   nil
   nil
-  '((buffer-file-coding-system . cp866-unix) (truncate-lines)))
+  '((buffer-file-coding-system . cp866-unix) (truncate-lines))
+  '((mark-ring (3918 3301 3234 3169 3104 3104 2465 2465 3918 2466 2465 2465 2465 2465 2465 2469))))
 
-(desktop-create-buffer 206
+(desktop-create-buffer 208
+  "d:/prg/parus/frq/parsefrq.py"
+  "parsefrq.py"
+  'python-mode
+  '(visual-line-mode global-auto-revert-mode global-whitespace-mode linum-mode auto-complete-mode outline-minor-mode hi-lock-mode anaconda-mode)
+  1009
+  '(423 nil)
   nil
-  "Roaming"
-  'dired-mode
-  '(visual-line-mode global-auto-revert-mode global-whitespace-mode linum-mode)
-  325
-  '(nil nil)
-  t
-  '("c:/Users/ask/AppData/Roaming/")
-  '((truncate-lines)))
+  nil
+  '((tab-width . 4) (indent-tabs-mode) (buffer-file-coding-system . utf-8-dos) (truncate-lines . t))
+  '((mark-ring (2307 2307 2307 2307 423 423 2307 423 1914 423 1725 423 1617 423 1506 785))))
 
-(desktop-create-buffer 206
+(desktop-create-buffer 208
   nil
   "frq"
   'dired-mode
   '(visual-line-mode global-auto-revert-mode global-whitespace-mode linum-mode)
-  257
+  233
   '(nil nil)
   t
   '("d:/prg/parus/frq/")
-  '((truncate-lines)))
+  '((truncate-lines . t))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "Roaming"
+  'dired-mode
+  '(visual-line-mode global-auto-revert-mode global-whitespace-mode linum-mode)
+  620
+  '(nil nil)
+  t
+  '("c:/Users/ASK/AppData/Roaming/")
+  '((truncate-lines))
+  '((mark-ring nil)))
 
