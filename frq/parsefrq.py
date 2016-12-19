@@ -9,23 +9,25 @@ import sys
 import numpy as np
 import os.path as path
 import time
+import os
 
 class headerFrq:
     "Класс, содержащий данные заголовка файла."
     def __init__(self, file):
-        self.__file = file
+
+        self.___file = file
         self.getHeader()
 
-#% =========================================================================
+#% =============================================================================
 #% Чтение заголовка файла данных.
 #% !!!uint32!!!
 #% struct dataHeader { 	    // === Заголовок файла данных ===
 #%   unsigned ver; // номер версии
 #%   struct tm time_sound; // GMT время получения зондирования
-#%   unsigned height_min; // начальная высота, км (всё, что ниже при обработке отбрасывается)
-#% 	unsigned height_max; // конечная высота, км (всё, что выше при обработке отбрасывается)
-#%   unsigned height_step; // шаг по высоте, м (реальный шаг, вычисленный по частоте АЦП)
-#%   unsigned count_height; // число высот (размер исходного буфера АЦП при зондировании, fifo нашего АЦП 4Кб. Т.е. не больше 1024 отсчётов для двух квадратурных каналов)
+#% unsigned height_min; // начальная высота, км (всё, что ниже при обработке отбрасывается)
+#% unsigned height_max; // конечная высота, км (всё, что выше при обработке отбрасывается)
+#% unsigned height_step; // шаг по высоте, м (реальный шаг, вычисленный по частоте АЦП)
+#% unsigned count_height; // число высот (размер исходного буфера АЦП при зондировании, fifo нашего АЦП 4Кб. Т.е. не больше 1024 отсчётов для двух квадратурных каналов)
 #%   unsigned count_modules; // количество модулей/частот зондирования
 #% 	unsigned pulse_frq; // частота зондирующих импульсов, Гц
 #% };
@@ -48,8 +50,9 @@ class headerFrq:
         self.__file.seek(0, 0)
         # Распакуем структуру данных из заголовка файла.
         _dtype = np.dtype([('ver', 'I'),
-                       ('time', [('sec','i'), ('min','i'), ('hour','i'), ('mday','i'), ('mon','i'), ('year','i'),
-                                 ('wday','i'), ('yday','i'), ('isdst','i')]),
+                       ('time', [('sec','i'), ('min','i'), ('hour','i'),
+                                ('mday','i'), ('mon','i'), ('year','i'),
+                        ('wday','i'), ('yday','i'), ('isdst','i')]),
                        ('height_min', 'I'),
                        ('height_max', 'I'),
                        ('height_step', 'I'),
@@ -57,8 +60,9 @@ class headerFrq:
                        ('count_modules', 'I')])
         self.__header = np.fromfile(self.__file, _dtype, count=1)
         t = self.__header['time']
-        tt = (t['year'][0], t['mon'][0], t['mday'][0], t['hour'][0], t['min'][0], 
-              t['sec'][0], t['wday'][0], t['yday'][0], t['isdst'][0])
+        tt = (t['year'][0], t['mon'][0], t['mday'][0],
+                t['hour'][0], t['min'][0], t['sec'][0],
+                t['wday'][0], t['yday'][0], t['isdst'][0])
         self.__time = time.struct_time(tt)
         # Считываем частоты зондирования
         count_modules = self.__header['count_modules'][0]
