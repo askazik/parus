@@ -26,14 +26,14 @@ class headerFrq:
         # Распакуем структуру данных из заголовка файла.
         _dtype = np.dtype([('ver', 'I'), # номер версии
                        ('time', # GMT время получения зондирования
-                            [('sec','i'), # seconds after the minute  0-60*
-                            ('min','i'), # minutes after the hour	0-59
-                            ('hour','i'), # hours since midnight	0-23
-                            ('mday','i'), # day of the month	1-31
-                            ('mon','i'), # months since January	0-11
+                            [('sec','i'), # seconds after the minute (0-60*)
+                            ('min','i'), # minutes after the hour (0-59)
+                            ('hour','i'), # hours since midnight (0-23)
+                            ('mday','i'), # day of the month (1-31)
+                            ('mon','i'), # months since January (0-11)
                             ('year','i'), # years since 1900
-                            ('wday','i'), # days since Sunday	0-6
-                            ('yday','i'), # days since January 1	0-365
+                            ('wday','i'), # days since Sunday (0-6)
+                            ('yday','i'), # days since January 1 (0-365)
                             ('isdst','i')]), # Daylight Saving Time flag
                         ('height_min', 'I'), # начальная высота, км (всё, что ниже при обработке отбрасывается)
                         ('height_max', 'I'), # конечная высота, км (всё, что выше при обработке отбрасывается)
@@ -56,8 +56,6 @@ class headerFrq:
 
 class parusFrq(np.memmap):
     "Класс для работы с данными многочастотных измерений амплитуд."
-    __dtype = dtype=np.int16
-    __shape = (0,0)
 
     def __init__(self, filename):
         self.__file = self.existFile(filename)
