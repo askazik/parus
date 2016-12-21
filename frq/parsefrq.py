@@ -13,6 +13,7 @@ import os
 class header(object):
     "Класс, содержащий данные заголовка файла."
     def __init__(self, file):
+        super().__init__()
         self._file = file
         self.getHeader()
 
@@ -58,7 +59,7 @@ class header(object):
         """Формирование списка высот зондирования."""
 
         version = self._header['ver']
-        h_step = self._header['height_step']
+        h_step = self._header['height_step'] / 1000 # in km
         if version == 0 or version == 2: # stripped sounding heights
             # first reflection heights
             h_min = self._header['height_min']
@@ -67,12 +68,10 @@ class header(object):
 
             # second reflection heights
             h_min_2 = h_min * 2
-            DH = h1(-1) - h1(0)
+            DH = h1[-1] - h1[0]
             h_max_2 = h_min_2 + DH
             h2 = np.arange(h_min_2, h_max_2, h_step)
-
-            # both reflections
-            heights = np.concatenate(h1, h2)
+            heights = np.concatenate((h1, h2), axis=0)
 
         elif version == 1: # full list of sounding heights
             n_heights = self._header['count_height'][0]
@@ -121,7 +120,8 @@ class parusFrq(header):
 
 # Проверочная программа
 if __name__ == '__main__':
-    filepath = path.join('i:\!data\E', '20161208053100.frq')
+    #filepath = path.join('i:\!data\E', '20161208053100.frq')
+    filepath = path.join('d:\!data\E', '20161107090206.frq')
     A = parusFrq(filepath)
 
 #Data = np.memmap(filepath, dtype=np.int16, mode='r', shape=(2000,2000))
