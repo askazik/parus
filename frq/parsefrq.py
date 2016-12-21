@@ -8,8 +8,9 @@ import sys
 import numpy as np
 import os.path as path
 import time
+import os
 
-class headerFrq():
+class header(object):
     "Класс, содержащий данные заголовка файла."
     def __init__(self, file):
         self._file = file
@@ -75,7 +76,7 @@ class headerFrq():
 
         elif version == 1: # full list of sounding heights
             n_heights = self._header['count_height'][0]
-            h_max = (n_heights - 1) * h_step
+            h_max = n_heights * h_step
             heights = np.arange(0, h_max, h_step)
 
         else: # unsupported version
@@ -83,19 +84,27 @@ class headerFrq():
 
         return heights
 
-
-class parusFrq(np.memmap):
+class parusFrq(header):
     "Класс для работы с данными многочастотных измерений амплитуд."
-    _dtype = dtype=np.int16
-    _shape = (0,0)
 
     def __init__(self, filename):
         self._file = self.existFile(filename)
-        self._header = headerFrq(self._file)
-        super().__init__(self._file,
-                             dtype = self._dtype,
+        super().__init__(self._file)
+
+        # Since offset is measured in bytes, it should normally be a
+        # multiple of the byte-size of dtype.
+        _dtype = np.int16
+        _offset = self._datapos // _dtype(0).nbytes
+        _rows = 2 * self._heights.size # two quadrature np.int16
+        _cols = self._frqs.size
+        _units = 32000 // _cols
+
+        self._mmap =  np.memmap(self._file,
+                             dtype = _dtype,
                              mode = 'r',
-                             shape = self._shape)
+                             offset = _offset,
+                             shape = (_rows, _cols, _units),
+                             order = 'C')
 
     def existFile(self, fname):
         """Проверка существования файла. Input: fname - полный путь к файлу."""
@@ -112,7 +121,7 @@ class parusFrq(np.memmap):
 
 # Проверочная программа
 if __name__ == '__main__':
-    filepath = path.join('D:\!data\E', '20161208053100.frq')
+    filepath = path.join('i:\!data\E', '20161208053100.frq')
     A = parusFrq(filepath)
 
 #Data = np.memmap(filepath, dtype=np.int16, mode='r', shape=(2000,2000))

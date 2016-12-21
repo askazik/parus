@@ -11,14 +11,25 @@
 (setq desktop-missing-file-warning nil)
 (setq tags-file-name nil)
 (setq tags-table-list nil)
-(setq search-ring nil)
+(setq search-ring '("autocomplete"))
 (setq regexp-search-ring nil)
 (setq register-alist nil)
 (setq file-name-history '("d:/prg/parus/frq" "~/" "~"))
 
 ;; Buffer section -- buffers listed in same order as in buffer list:
-(desktop-create-buffer 208
-  "c:/Users/ASK/AppData/Roaming/.emacs"
+(desktop-create-buffer 206
+  "d:/prg/parus/frq/parsefrq.py"
+  "parsefrq.py"
+  'python-mode
+  '(visual-line-mode global-auto-revert-mode global-whitespace-mode linum-mode outline-minor-mode)
+  602
+  '(362 nil)
+  nil
+  nil
+  '((tab-width . 4) (indent-tabs-mode) (buffer-file-coding-system . utf-8-dos) (truncate-lines)))
+
+(desktop-create-buffer 206
+  "c:/Users/ask/AppData/Roaming/.emacs"
   ".emacs"
   'emacs-lisp-mode
   '(visual-line-mode global-auto-revert-mode global-whitespace-mode linum-mode auto-complete-mode)
