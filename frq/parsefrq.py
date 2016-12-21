@@ -97,12 +97,13 @@ class parusFrq(header):
         _offset = self._datapos // _dtype(0).nbytes
         _rows = 2 * self._heights.size # two quadrature np.int16
         _cols = self._frqs.size
+        _units = 32000 // _cols
 
         self._mmap =  np.memmap(self._file,
                              dtype = _dtype,
                              mode = 'r',
                              offset = _offset,
-                             shape = (_rows, _cols),
+                             shape = (_rows, _cols, _units),
                              order = 'C')
 
     def existFile(self, fname):
