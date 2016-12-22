@@ -4,9 +4,11 @@
 
 Отладка в Emacs: (M-x pdb) -> (py -m pdb <filename>)
 """
-import sys
 import numpy as np
+import matplotlib.pyplot as plt
+
 import os.path as path
+import sys
 import time
 import os
 
@@ -87,13 +89,13 @@ class parusFrq(header):
     "Класс для работы с данными многочастотных измерений амплитуд."
 
     def __init__(self, filename):
-        self._file = self.existFile(filename)
+        self._file = self.openFile(filename)
         super().__init__(self._file)
 
         # Since offset is measured in bytes, it should normally be a
         # multiple of the byte-size of dtype.
         _dtype = np.int16
-        _offset = self._datapos // _dtype(0).nbytes
+        _offset = self._datapos
         _rows = 2 * self._heights.size # two quadrature np.int16
         _cols = self._frqs.size
         _units = 32000 // _cols
@@ -102,11 +104,15 @@ class parusFrq(header):
                              dtype = _dtype,
                              mode = 'r',
                              offset = _offset,
-                             shape = (_rows, _cols, _units),
+                             shape = ( _units, _cols, _rows),
                              order = 'C')
 
-    def existFile(self, fname):
-        """Проверка существования файла. Input: fname - полный путь к файлу."""
+    def openFile(self, fname):
+        """Open file with existence checking.
+
+        Keyword arguments:
+        fname -- full file path.
+        """
 
         s = 'The file <' + fname
         try:
@@ -117,11 +123,76 @@ class parusFrq(header):
 
         return file
 
+    def getUnit(self, idTime):
+        """Get multifrequence data unit with complex amplitudes.
+
+        Keyword arguments:
+        idTime -- time number (Unit number) from begin of sounding.
+        """
+        raw = self._mmap[idTime,:,:]
+        # two last bytes save channel information
+        raw_shifted = np.right_shift(raw, 2)
+        # get complex amplitude
+        result = np.array(raw_shifted[:, ::2], dtype = complex)
+        result.imag = raw_shifted[:, 1::2]
+
+        return result
+
+    def getUnitFrequency(self, idTime, idFrq):
+        """Get one-frequence complex amplitudes.
+
+        Keyword arguments:
+        idTime -- time number (Unit number) from begin of sounding;
+        idFrq -- frequency number.
+        """
+        raw = self._mmap[idTime,idFrq,:]
+        # two last bytes save channel information
+        raw_shifted = np.right_shift(raw, 2)
+        # get complex amplitude
+        result = np.array(raw_shifted[::2], dtype = complex)
+        result.imag = raw_shifted[1::2]
+
+        return result
+
+    def plotFrequency(self, idTime, idFrq):
+        """Plot data for given time and frequency numbers.
+
+        Keyword arguments:
+        idTime -- time number (Unit number) from begin of sounding;
+        idFrq -- frequency number.
+        """
+
+        data = self.getUnitFrequency(idTime, idFrq)
+        value = np.absolute(data)
+        phase = np.angle(data, deg=True)
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(2, 1, 1)
+        #ax1.set_title(u'Abs. amplitude')
+        ax2 = fig.add_subplot(2, 1, 2)
+        #ax2.set_title(u'Phase')
+
+        for ax in fig.axes:
+            ax.set_ylabel('Height, km')
+            ax.grid(True)
+
+        ax1.plot(value, self._heights)
+        ax1.set_xlabel('Abs. amplitude, un.')
+
+        ax2.plot(phase, self._heights)
+        ax2.set_xlabel('Phase, degr.')
+
+        # ax1.title('File {}, frq = {} kHz, No <{}>.'
+        #               .format(self._file.name, self._frqs[idFrq], idTime))
+
+        plt.show()
 
 # Проверочная программа
 if __name__ == '__main__':
-    #filepath = path.join('i:\!data\E', '20161208053100.frq')
-    filepath = path.join('d:\!data\E', '20161107090206.frq')
+    filepath = path.join('h:\!data\E', '20161208053100.frq')
+    #filepath = path.join('d:\!data\E', '20161107090206.frq')
+    #filepath = path.join('i:\!data\E', '20161107090206.frq')
     A = parusFrq(filepath)
+    A.plotFrequency(2,1)
 
 #Data = np.memmap(filepath, dtype=np.int16, mode='r', shape=(2000,2000))
