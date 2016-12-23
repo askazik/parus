@@ -167,31 +167,35 @@ class parusFrq(header):
         phase = np.angle(data, deg=True)
 
         fig = plt.figure()
-        ax1 = fig.add_subplot(2, 1, 1)
-        #ax1.set_title(u'Abs. amplitude')
-        ax2 = fig.add_subplot(2, 1, 2)
-        #ax2.set_title(u'Phase')
+        fig.canvas.set_window_title('File {}, frq = {} kHz, No <{}>.'
+                         .format(self._file.name, self._frqs[idFrq], idTime))
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax1.set_ylabel('Height, km')
+        ax2 = fig.add_subplot(1, 2, 2)
+        ax2.tick_params(axis='y', labelleft='off', labelright='on')
 
         for ax in fig.axes:
-            ax.set_ylabel('Height, km')
             ax.grid(True)
 
         ax1.plot(value, self._heights)
         ax1.set_xlabel('Abs. amplitude, un.')
 
-        ax2.plot(phase, self._heights)
+        ax2.plot(phase, self._heights, 'green')
         ax2.set_xlabel('Phase, degr.')
 
-        # ax1.title('File {}, frq = {} kHz, No <{}>.'
-        #               .format(self._file.name, self._frqs[idFrq], idTime))
-
+        # set heights limits
+        ymin = self._heights.min()
+        ymax = self._heights.max()
+        ax1.set_ylim([ymin,ymax])
+        ax2.set_ylim([ymin,ymax])
+        # set padding between subplots
+        plt.subplots_adjust(wspace = .001)
         plt.show()
 
 # Проверочная программа
 if __name__ == '__main__':
-    filepath = path.join('h:\!data\E', '20161208053100.frq')
+    filepath = path.join('d:\!data\E', '20161208053100.frq')
     #filepath = path.join('d:\!data\E', '20161107090206.frq')
-    #filepath = path.join('i:\!data\E', '20161107090206.frq')
     A = parusFrq(filepath)
     A.plotFrequency(2,1)
 
