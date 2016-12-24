@@ -193,59 +193,22 @@ class parusFrq(header):
         plt.subplots_adjust(wspace = .001)
         plt.show()
 
-    def animationFrequency(self, idFrq):
-        """Animation plot data for given frequency number.
-
-        Keyword arguments:
-        idFrq -- frequency number.
-        """
-
-        path, filename = os.path.split(self._file.name)
-        # First set up the figure, the axis, and the plot elements we want to animate
-        fig = plt.figure()
-        fig.canvas.set_window_title('File {}, frq = {} kHz.'
-                         .format(filename, self._frqs[idFrq]))
-
-        ymin = self._heights.min()
-        ymax = self._heights.max()
-        plt.ylim(ymin, ymax)
-        plt.ylabel('Height, km')
-        plt.xlabel('Abs. amplitude, un.')
-        plt.gca().grid()
-
-        l, = plt.plot(np.zeros(self._heights.shape[0]), self._heights)
-
-        # draw function.  This is called sequentially
-        def animate(iTime, iFrq, line):
-            data = self.getUnitFrequency(iTime, iFrq)
-            value = np.absolute(data)
-            line.set_xdata(value)
-            return line,
-
-        # call the animator.
-        # blit=True means only re-draw the parts that have changed.
-        anim = animation.FuncAnimation(fig, animate,
-                                           fargs=(idFrq, l),
-                                           interval=100,
-                                           blit=True)
-        plt.show()
-
 
 class parusAmnimation(parusFrq):
+    """Animation class for multyfrequencies data.
+
+    """
 
     def __init__(self, filename, frqNum = 0):
         super().__init__(filename)
         self.fig = plt.figure()
-        self.frqNum = frqNum
+        self.frqNumber = frqNum
 
-        # set canvas title
-        path, fname = os.path.split(filename)
-        self.fig.canvas.set_window_title('File {}, frq = {} kHz.'
-                         .format(filename, self._frqs[frqNum]))
         # set axes
         ymin = self._heights.min()
         ymax = self._heights.max()
         plt.ylim(ymin, ymax)
+        plt.xlim(0, 10000)
         plt.ylabel('Height, km')
         plt.xlabel('Abs. amplitude, un.')
         plt.gca().grid()
@@ -253,10 +216,24 @@ class parusAmnimation(parusFrq):
         self.line, = plt.plot(np.zeros(self._heights.shape[0]),
                                   self._heights)
 
+    def getFrqNum(self):
+        return self.__frqNum
+    def setFrqNum(self, value):
+        # set canvas title
+        path, fname = os.path.split(self._file.name)
+        self.fig.canvas.set_window_title('File {}, frq = {} kHz.'
+                         .format(fname, self._frqs[value]))
+        self.__frqNum = value
+    def delFrqNum(self):
+        del self.__frqNum
+    frqNumber = property(getFrqNum, setFrqNum, delFrqNum,
+                             "Number of the current frequency for one-frequencies working.")
+
     # draw function.  This is called sequentially
     def animate(self, i):
-        data = self.getUnitFrequency(i, self.frqNum)
+        data = self.getUnitFrequency(i, self.frqNumber)
         value = np.absolute(data)
+        #value = np.random.rand(1, 256)
         self.line.set_xdata(value)
         return self.line,
 
@@ -267,7 +244,7 @@ class parusAmnimation(parusFrq):
         self.anim = animation.FuncAnimation(self.fig,
                                                 self.animate,
                                                 100,
-                                                interval=100,
+                                                interval=10,
                                                 blit=True)
 
 # Проверочная программа
@@ -277,8 +254,7 @@ if __name__ == '__main__':
     #A = parusFrq(filepath)
     #A.plotFrequency(2,1)
     B = parusAmnimation(filepath)
+    B.frqNumber = 4
     B.start()
 
     plt.show()
-
-#Data = np.memmap(filepath, dtype=np.int16, mode='r', shape=(2000,2000))
