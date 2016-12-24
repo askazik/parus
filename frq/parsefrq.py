@@ -6,6 +6,7 @@
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 import os.path as path
 import sys
@@ -50,7 +51,7 @@ class header(object):
                 t['wday'][0], t['yday'][0], t['isdst'][0])
         self._time = time.struct_time(tt)
         # Считываем частоты зондирования, Гц
-        count_modules = self._header['count_modules'][0]
+        count_modules, = self._header['count_modules']
         self._frqs = np.fromfile(self._file,
                                       np.dtype(np.uint32),
                                       count_modules)
@@ -76,7 +77,7 @@ class header(object):
             heights = np.concatenate((h1, h2), axis=0)
 
         elif version == 1: # full list of sounding heights
-            n_heights = self._header['count_height'][0]
+            n_heights, = self._header['count_height']
             h_max = n_heights * h_step
             heights = np.arange(0, h_max, h_step)
 
@@ -192,11 +193,92 @@ class parusFrq(header):
         plt.subplots_adjust(wspace = .001)
         plt.show()
 
+    def animationFrequency(self, idFrq):
+        """Animation plot data for given frequency number.
+
+        Keyword arguments:
+        idFrq -- frequency number.
+        """
+
+        path, filename = os.path.split(self._file.name)
+        # First set up the figure, the axis, and the plot elements we want to animate
+        fig = plt.figure()
+        fig.canvas.set_window_title('File {}, frq = {} kHz.'
+                         .format(filename, self._frqs[idFrq]))
+
+        ymin = self._heights.min()
+        ymax = self._heights.max()
+        plt.ylim(ymin, ymax)
+        plt.ylabel('Height, km')
+        plt.xlabel('Abs. amplitude, un.')
+        plt.gca().grid()
+
+        l, = plt.plot(np.zeros(self._heights.shape[0]), self._heights)
+
+        # draw function.  This is called sequentially
+        def animate(iTime, iFrq, line):
+            data = self.getUnitFrequency(iTime, iFrq)
+            value = np.absolute(data)
+            line.set_xdata(value)
+            return line,
+
+        # call the animator.
+        # blit=True means only re-draw the parts that have changed.
+        anim = animation.FuncAnimation(fig, animate,
+                                           fargs=(idFrq, l),
+                                           interval=100,
+                                           blit=True)
+        plt.show()
+
+
+class parusAmnimation(parusFrq):
+
+    def __init__(self, filename, frqNum = 0):
+        super().__init__(filename)
+        self.fig = plt.figure()
+        self.frqNum = frqNum
+
+        # set canvas title
+        path, fname = os.path.split(filename)
+        self.fig.canvas.set_window_title('File {}, frq = {} kHz.'
+                         .format(filename, self._frqs[frqNum]))
+        # set axes
+        ymin = self._heights.min()
+        ymax = self._heights.max()
+        plt.ylim(ymin, ymax)
+        plt.ylabel('Height, km')
+        plt.xlabel('Abs. amplitude, un.')
+        plt.gca().grid()
+
+        self.line, = plt.plot(np.zeros(self._heights.shape[0]),
+                                  self._heights)
+
+    # draw function.  This is called sequentially
+    def animate(self, i):
+        data = self.getUnitFrequency(i, self.frqNum)
+        value = np.absolute(data)
+        self.line.set_xdata(value)
+        return self.line,
+
+
+    def start(self):
+        # call the animator.
+        # blit=True means only re-draw the parts that have changed.
+        self.anim = animation.FuncAnimation(self.fig,
+                                                self.animate,
+                                                100,
+                                                interval=100,
+                                                blit=True)
+
 # Проверочная программа
 if __name__ == '__main__':
     filepath = path.join('d:\!data\E', '20161208053100.frq')
     #filepath = path.join('d:\!data\E', '20161107090206.frq')
-    A = parusFrq(filepath)
-    A.plotFrequency(2,1)
+    #A = parusFrq(filepath)
+    #A.plotFrequency(2,1)
+    B = parusAmnimation(filepath)
+    B.start()
+
+    plt.show()
 
 #Data = np.memmap(filepath, dtype=np.int16, mode='r', shape=(2000,2000))
