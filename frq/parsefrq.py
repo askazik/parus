@@ -45,6 +45,7 @@ class header(object):
                         ('count_modules', 'I'), # количество модулей/частот зондирования
                         ('pulse_frq','I')]) # частота зондирующих импульсов, Гц
         self._header = np.fromfile(self._file, _dtype, count=1)
+        self._dt, = 1 / self._header['pulse_frq']
         t = self._header['time']
         tt = (t['year'][0], t['mon'][0], t['mday'][0],
                 t['hour'][0], t['min'][0], t['sec'][0],
@@ -67,13 +68,14 @@ class header(object):
             # first reflection heights
             h_min = self._header['height_min']
             h_max = self._header['height_max']
-            h1 = np.arange(h_min, h_max, h_step)
+            DH = h_max - h_min
+            num = 1 + DH // h_step
+            h1 = np.linspace(h_min, h_max, num)
 
             # second reflection heights
             h_min_2 = h_min * 2
-            DH = h1[-1] - h1[0]
             h_max_2 = h_min_2 + DH
-            h2 = np.arange(h_min_2, h_max_2, h_step)
+            h2 = np.linspace(h_min_2, h_max_2, num)
             heights = np.concatenate((h1, h2), axis=0)
 
         elif version == 1: # full list of sounding heights
@@ -90,39 +92,30 @@ class parusFrq(header):
     "Класс для работы с данными многочастотных измерений амплитуд."
 
     def __init__(self, filename):
-        self._file = self.openFile(filename)
+
+        # Raise os.error if the file does not exist or is inaccessible.
+        _filesize = os.path.getsize(filename)
+        self._file = open(filename, 'rb')
+
         super().__init__(self._file)
 
         # Since offset is measured in bytes, it should normally be a
         # multiple of the byte-size of dtype.
         _dtype = np.int16
         _offset = self._datapos
-        _rows = 2 * self._heights.size # two quadrature np.int16
-        _cols = self._frqs.size
-        _units = 32000 // _cols
+        self._rows = 2 * self._heights.size # two quadrature np.int16
+        self._cols = self._frqs.size
+
+        unitSize =  np.dtype(_dtype).itemsize * self._rows * self._cols
+        dataSize = _filesize - _offset
+        self._units = dataSize // unitSize
 
         self._mmap =  np.memmap(self._file,
                              dtype = _dtype,
                              mode = 'r',
                              offset = _offset,
-                             shape = ( _units, _cols, _rows),
+                             shape = ( self._units, self._cols, self._rows),
                              order = 'C')
-
-    def openFile(self, fname):
-        """Open file with existence checking.
-
-        Keyword arguments:
-        fname -- full file path.
-        """
-
-        s = 'The file <' + fname
-        try:
-            file = open(fname, 'rb')
-        except IOError as e:
-            print(s + '> missing or did you misspell his name!')
-            sys.exit()
-
-        return file
 
     def getUnit(self, idTime):
         """Get multifrequence data unit with complex amplitudes.
@@ -208,12 +201,17 @@ class parusAmnimation(parusFrq):
         ymin = self._heights.min()
         ymax = self._heights.max()
         plt.ylim(ymin, ymax)
-        plt.xlim(0, 10000)
+        plt.xlim(0, 16000)
         plt.ylabel('Height, km')
         plt.xlabel('Abs. amplitude, un.')
-        plt.gca().grid()
+        ax = plt.gca()
 
-        self.line, = plt.plot(np.zeros(self._heights.shape[0]),
+        ax.grid()
+        self.timetext = ax.text(0.5, 0.5,'',
+                                 horizontalalignment='center',
+                                 verticalalignment='center',
+                                 transform = ax.transAxes)
+        self.line, = ax.plot(np.zeros(self._heights.shape[0]),
                                   self._heights)
 
     def getFrqNum(self):
@@ -229,13 +227,22 @@ class parusAmnimation(parusFrq):
     frqNumber = property(getFrqNum, setFrqNum, delFrqNum,
                              "Number of the current frequency for one-frequencies working.")
 
+    # init function.
+    def init(self):
+        self.animate(0)
+
+        return self.line, self.timetext
+
     # draw function.  This is called sequentially
     def animate(self, i):
         data = self.getUnitFrequency(i, self.frqNumber)
         value = np.absolute(data)
-        #value = np.random.rand(1, 256)
         self.line.set_xdata(value)
-        return self.line,
+
+        t = i * self._dt * self._cols / 60  # time in minits
+        self.timetext.set_text('{0:8.2f}, min.'.format(t))
+
+        return self.line, self.timetext
 
 
     def start(self):
@@ -243,14 +250,16 @@ class parusAmnimation(parusFrq):
         # blit=True means only re-draw the parts that have changed.
         self.anim = animation.FuncAnimation(self.fig,
                                                 self.animate,
-                                                100,
-                                                interval=10,
-                                                blit=True)
+                                                init_func = self.init,
+                                                frames = self._units,
+                                                interval = 1,
+                                                blit = True,
+                                                repeat=False)
 
 # Проверочная программа
 if __name__ == '__main__':
+    #filepath = path.join('d:\!data\E', '20161208053100.frq')
     filepath = path.join('d:\!data\E', '20161208053100.frq')
-    #filepath = path.join('d:\!data\E', '20161107090206.frq')
     #A = parusFrq(filepath)
     #A.plotFrequency(2,1)
     B = parusAmnimation(filepath)
