@@ -121,3 +121,4 @@ class parusAmnimation(parusFile):
             self.fig, self.animate, init_func=self.init,
             frames=self._units, interval=1,
             blit=True, repeat=False)
+        plt.show()

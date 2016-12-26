@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Work with data file.
-
 """
-import matplotlib.pyplot as plt
-
 import os.path as path
-
 import parusPlot
 
 
@@ -19,5 +15,3 @@ if __name__ == '__main__':
     B = parusPlot.parusAmnimation(filepath)
     B.frqNumber = 4
     B.start()
-
-    plt.show()
