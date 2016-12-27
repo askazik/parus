@@ -151,3 +151,32 @@ class parusFile(header):
         result.imag = raw_shifted[1::2]
 
         return result
+
+    def getAveragedLine(self, idFrq):
+        """Get averaged line array for a full time period for
+        given sounding frequency.
+
+        Keyword arguments:
+        idFrq -- frequency number.
+        """
+        x = self._mmap[:, idFrq, :]
+        avg_raw = np.int16(np.mean(x, axis=0))
+        # two last bytes save channel information
+        avg_shifted = np.right_shift(avg_raw, 2)
+        # get complex amplitude
+        avg_complex = np.array(avg_shifted[::2], dtype=complex)
+        avg_complex.imag = avg_shifted[1::2]
+        # get absolute numbers
+        avg_abs = np.absolute(avg_complex)
+
+        return avg_abs
+
+    def getAllAveragedLines(self):
+        """Get averaged lines array for all frequencies for a full
+        time period.
+        """
+        linesArray = np.zeros(self._rows, self._cols)
+        for i in range(self._cols):
+            linesArray[:, i] = self.getAveragedLine(i)
+
+        return linesArray

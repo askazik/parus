@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Проверка работы с memory mapping средствами numpy.
-
-Отладка в Emacs: (M-x pdb) -> (py -m pdb <filename>)
+Classes for graphical output of resalts.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,6 +36,9 @@ class parusAmnimation(parusFile):
             transform=ax.transAxes)
         self.line, = ax.plot(
             np.zeros(self._heights.shape[0]), self._heights)
+
+        avg = self.getAveragedLine(self.frqNumber)
+        avg_line = ax.plot(avg, self._heights)
 
     def plotFrequency(self, idTime, idFrq):
         """Plot data for given time and frequency numbers.
