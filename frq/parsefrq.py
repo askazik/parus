@@ -5,7 +5,8 @@ Work with data file.
 import os.path as path
 import argparse
 
-import parusPlot
+import parusPlot as pplt
+import parusFile as pfl
 
 def createParser():
     parser = argparse.ArgumentParser()
@@ -15,18 +16,26 @@ def createParser():
     parser.add_argument (
         '-f', '--filename',
         default='20161208053100.frq')
+    parser.add_argument (
+        '-z', '--height',
+        default=100) # effective height in km for first reflection
 
     return parser
 
 # Проверочная программа
 if __name__ == '__main__':
-    # setup argument parsing
+    # 0. Get working parameters.
     parser = createParser()
     namespace = parser.parse_args()
     filepath = path.join(namespace.directory, namespace.filename)
+    height = namespace.height
 
-    # A = parusFrq(filepath)
-    # A.plotFrequency(2,1)
-    B = parusPlot.parusAmnimation(filepath, 2)
+    # 1. Parsing data and collect information.
+    A = pfl.parusFile(filepath)
+    avgLines = A.getAllAveragedLines()
+    pplt.plotLines(namespace.filename, avgLines, A._heights, A._frqs)
+
+    # Animation
+    # B = pp.parusAmnimation(filepath, 2)
     # B.frqNumber = 4
-    B.start()
+    # B.start()

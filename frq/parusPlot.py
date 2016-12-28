@@ -10,6 +10,36 @@ import os
 from parusFile import parusFile
 
 
+def plotLines(filename, lines, heights, frqs):
+    """Plot array of lines on subplots.
+
+    Keyword arguments:
+    filename -- name of files where lines gettig from,
+    lines -- array of plotted lines,
+    heights -- values of heights,
+    frqs -- values of frequencies.
+    """
+
+    # Three subplots sharing both x/y axes
+    _rows=lines.shape[1]
+    fig, axs = plt.subplots(
+        nrows=_rows, ncols=1, sharex=True, sharey=True)
+    for ax, i in zip(axs, range(_rows)):
+        ax.grid(True)
+        ax.plot(heights, lines[:,i], label='{} kHz'.format(frqs[i]))
+        ax.legend()
+
+    ax.set_xlabel('Height, km')
+
+    # Fine-tune figure; make subplots close to each other and hide x
+    # ticks for all but bottom plot.
+    fig.canvas.set_window_title('File {}.'.format(filename))
+    fig.subplots_adjust(hspace=0)
+    plt.setp([a.get_xticklabels() for a in axs[:-1]], visible=False)
+
+    plt.show()
+
+
 class parusAmnimation(parusFile):
     """Animation class for multyfrequencies data.
     """

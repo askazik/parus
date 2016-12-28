@@ -175,7 +175,7 @@ class parusFile(header):
         """Get averaged lines array for all frequencies for a full
         time period.
         """
-        linesArray = np.zeros(self._rows, self._cols)
+        linesArray = np.zeros((self._rows//2, self._cols))
         for i in range(self._cols):
             linesArray[:, i] = self.getAveragedLine(i)
 
