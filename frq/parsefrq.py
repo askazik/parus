@@ -5,8 +5,8 @@ Work with data file.
 import os.path as path
 import argparse
 
+import parusFile as pf
 import parusPlot as pplt
-import parusFile as pfl
 
 def createParser():
     parser = argparse.ArgumentParser()
@@ -16,9 +16,6 @@ def createParser():
     parser.add_argument (
         '-f', '--filename',
         default='20161208053100.frq')
-    parser.add_argument (
-        '-z', '--height',
-        default=100) # effective height in km for first reflection
 
     return parser
 
@@ -28,12 +25,26 @@ if __name__ == '__main__':
     parser = createParser()
     namespace = parser.parse_args()
     filepath = path.join(namespace.directory, namespace.filename)
-    height = namespace.height
 
     # 1. Parsing data and collect information.
-    A = pfl.parusFile(filepath)
-    avgLines = A.getAllAveragedLines()
-    pplt.plotLines(namespace.filename, avgLines, A._heights, A._frqs)
+    A = pf.parusFile(filepath)
+    # 1.1. Plot averaged lines.
+    lines = A.getAllAveragedLines()
+    axs = pplt.plotLines(namespace.filename, lines, A._heights, A._frqs)
+    # 1.2. Plot first reflection and searching interval of heights.
+    intervals = A.adjastSearchingIntervals(lines)
+    pplt.plotReflections(axs, intervals)
+    # 1.3. Get h'(t) and A(t) for all frequencies
+
+    # 1.4. Estimation of dh between a radioimpulse sendig and the ADC start.
+
+    # 1.5. Estimation of noise features.
+
+    # 2. Estimation of permanent equipment (B) and effective reflection
+    # coefficient (rho_g).
+
+    # 3. Estimation of the apparent reflection coefficient.
+
 
     # Animation
     # B = pp.parusAmnimation(filepath, 2)

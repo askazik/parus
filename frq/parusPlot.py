@@ -39,6 +39,22 @@ def plotLines(filename, lines, heights, frqs):
 
     plt.show()
 
+    return axs
+
+def plotReflections(axs, intervals):
+    """Plot reflections rectangles on given axis.
+
+    Keyword arguments:
+    axs -- array of axis,
+    intervals -- information about searching intervals.
+    """
+
+    # Three subplots sharing both x/y axes
+    _rows = axs.shape[0]
+    for ax, i in zip(axs, range(_rows)):
+        pass
+
+    plt.show()
 
 class parusAmnimation(parusFile):
     """Animation class for multyfrequencies data.

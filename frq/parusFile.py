@@ -180,3 +180,64 @@ class parusFile(header):
             linesArray[:, i] = self.getAveragedLine(i)
 
         return linesArray
+
+    def adjastReflection(self, lines):
+        """Adjasting first reflection interval for given approximation.
+        Output heights and haights intervals for level 3 dB.
+
+        Keyword arguments:
+        line -- averaged line,
+        """
+        for i in range(self._cols):
+            lines[:, i] = self.getAveragedLine(i)
+
+        return height, dh
+
+    def getFirstHeights(self, lines):
+        """Get heights for first reflections for all frequencies.
+
+        Keyword arguments:
+        lines -- averaged lines array.
+        """
+        # definition of heights interval for first reflection
+        _min = 80
+        _max = 120
+
+        idxs = np.where((
+            (self._heights >= _min) & (self._heights <= _max)))[0]
+        # fill heights
+        clines = lines[idxs, :] # use constraints
+        a_maxs = np.amax(clines, axis=0)
+        idxs = np.where(lines == a_maxs)[0]
+
+        return a_maxs, clines, self._heights[idxs]
+
+    def adjastSearchingIntervals(self, lines):
+        """Adjasting all reflections intervals for given approximation.
+        Output heights and haights intervals for level 10 dB.
+
+        Keyword arguments:
+        lines -- averaged lines array,
+        approximationHeight -- given raw approximation.
+        """
+        # get a possible maximum number of reflections
+        amaxs, constraint_lines, first_heights = self.getFirstHeights(lines)
+        n_reflections = (self._heights[-1] // first_heights.max()).astype(int)
+
+        a_lims = amaxs / 10**(10/20)
+        intervals = np.zeros((self._cols, n_reflections, 3))
+        for i in range(self._cols): # cycle for frequencies
+            # use constraint lines !!!
+            i_into = np.where(constraint_lines[:,i] >= a_lims[i])[0]
+            a_min = constraint_lines[i_into[0], i]
+            a_max = constraint_lines[i_into[-1], i]
+            i_min = np.where(lines[:,i] == a_min)
+            i_max = np.where(lines[:,i] == a_max)
+            d_minus = first_heights[i] - self._heights[i_min[0]]
+            d_plus = self._heights[i_max[0]] - first_heights[i]
+            for j in range(n_reflections): # cycle for reflections
+                intervals[i,j,0] = first_heights[i]*(j+1)
+                intervals[i,j,1] = intervals[i,j,0] - d_minus
+                intervals[i,j,2] = intervals[i,j,0] + d_plus
+
+        return intervals
