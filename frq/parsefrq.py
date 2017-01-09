@@ -28,17 +28,24 @@ if __name__ == '__main__':
 
     # 1. Parsing data and collect information.
     A = pf.parusFile(filepath)
-    # 1.1. Plot averaged lines.
+    # 1.1. Get averaged lines.
     lines = A.getAllAveragedLines()
-    axs = pplt.plotLines(namespace.filename, lines, A._heights, A._frqs)
-    # 1.2. Plot first reflection and searching interval of heights.
+    # 1.3. Get first reflection and searching interval of heights.
+    # We need a effective height correction.
+    # Start of ADC is'nt a ground border! It is a time delay = c / dh.
+    # dh = 2 * h_1 - h_2
     intervals = A.adjastSearchingIntervals(lines)
-    pplt.plotReflections(axs, intervals)
-    # 1.3. Get h'(t) and A(t) for all frequencies
+    # 1.4. View averaged plots.
+    axs = pplt.plotLines(
+        namespace.filename,
+        lines, intervals,
+        A._heights, A._frqs)
 
-    # 1.4. Estimation of dh between a radioimpulse sendig and the ADC start.
+    # 1.5. Get h'(t) and A(t) for all frequencies
 
-    # 1.5. Estimation of noise features.
+    # 1.6. Estimation of dh between a radioimpulse sendig and the ADC start.
+
+    # 1.7. Estimation of noise features.
 
     # 2. Estimation of permanent equipment (B) and effective reflection
     # coefficient (rho_g).

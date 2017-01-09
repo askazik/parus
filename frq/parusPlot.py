@@ -10,7 +10,7 @@ import os
 from parusFile import parusFile
 
 
-def plotLines(filename, lines, heights, frqs):
+def plotLines(filename, lines, intervals, heights, frqs):
     """Plot array of lines on subplots.
 
     Keyword arguments:
@@ -20,14 +20,21 @@ def plotLines(filename, lines, heights, frqs):
     frqs -- values of frequencies.
     """
 
-    # Three subplots sharing both x/y axes
+    # Subplots sharing both x/y axes
     _rows=lines.shape[1]
+    n_reflections = intervals.shape[1]
+
     fig, axs = plt.subplots(
         nrows=_rows, ncols=1, sharex=True, sharey=True)
     for ax, i in zip(axs, range(_rows)):
         ax.grid(True)
         ax.plot(heights, lines[:,i], label='{} kHz'.format(frqs[i]))
         ax.legend()
+        for j in range(n_reflections): # cycle for reflections
+            xmin = intervals[i,j,1]
+            xmax = intervals[i,j,2]
+            ax.axvspan(xmin, xmax, facecolor='g', alpha=0.1)
+            ax.axvline(intervals[i,j,0], color='r')
 
     ax.set_xlabel('Height, km')
 
@@ -40,21 +47,6 @@ def plotLines(filename, lines, heights, frqs):
     plt.show()
 
     return axs
-
-def plotReflections(axs, intervals):
-    """Plot reflections rectangles on given axis.
-
-    Keyword arguments:
-    axs -- array of axis,
-    intervals -- information about searching intervals.
-    """
-
-    # Three subplots sharing both x/y axes
-    _rows = axs.shape[0]
-    for ax, i in zip(axs, range(_rows)):
-        pass
-
-    plt.show()
 
 class parusAmnimation(parusFile):
     """Animation class for multyfrequencies data.
