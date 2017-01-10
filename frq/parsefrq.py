@@ -31,9 +31,6 @@ if __name__ == '__main__':
     # 1.1. Get averaged lines.
     lines = A.getAllAveragedLines()
     # 1.3. Get first reflection and searching interval of heights.
-    # We need a effective height correction.
-    # Start of ADC is'nt a ground border! It is a time delay = c / dh.
-    # dh = 2 * h_1 - h_2
     intervals = A.adjastSearchingIntervals(lines)
     # 1.4. View averaged plots.
     axs = pplt.plotLines(
@@ -42,6 +39,9 @@ if __name__ == '__main__':
         A._heights, A._frqs)
 
     # 1.5. Get h'(t) and A(t) for all frequencies
+    # We need a effective height correction.
+    # Start of ADC is'nt a ground border! It is a time delay = c / dh.
+    # dh = 2 * h_1 - h_2
 
     # 1.6. Estimation of dh between a radioimpulse sendig and the ADC start.
 

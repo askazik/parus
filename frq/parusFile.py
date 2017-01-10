@@ -197,7 +197,7 @@ class parusFile(header):
         """Get heights for first reflections for all frequencies.
 
         Keyword arguments:
-        lines -- averaged lines array.
+        lines -- lines array.
         """
         # definition of heights interval for first reflection
         _min = 80
@@ -212,6 +212,19 @@ class parusFile(header):
 
         return a_maxs, clines, self._heights[idxs]
 
+    def getEffectiveHeights(self, lines):
+        """Get effective heights for all frequencies. Use two first reflections.
+
+        Keyword arguments:
+        lines -- lines array.
+        """
+        # get first dirty reflections
+        amaxs, constraint_lines, first_heights = self.getFirstHeights(lines)
+        # get a possible maximum number of reflections
+        n_reflections = (self._heights[-1] // first_heights.max()).astype(int)
+
+        return h
+
     def adjastSearchingIntervals(self, lines):
         """Adjasting all reflections intervals for given approximation.
         Output heights and haights intervals for level 10 dB.
@@ -224,7 +237,8 @@ class parusFile(header):
         amaxs, constraint_lines, first_heights = self.getFirstHeights(lines)
         n_reflections = (self._heights[-1] // first_heights.max()).astype(int)
 
-        a_lims = amaxs / 10**(10/20)
+        # a_lims = amaxs / 10**(10/20)
+        a_lims = amaxs / np.sqrt(10)
         intervals = np.zeros((self._cols, n_reflections, 3))
         for i in range(self._cols): # cycle for frequencies
             # use constraint lines !!!
