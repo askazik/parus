@@ -33,10 +33,10 @@ if __name__ == '__main__':
     # 1.3. Get first reflection and searching interval of heights.
     intervals = A.adjastSearchingIntervals(lines)
     # 1.4. View averaged plots.
-    axs = pplt.plotLines(
-        namespace.filename,
-        lines, intervals,
-        A._heights, A._frqs)
+    # axs = pplt.plotLines(
+    #     namespace.filename,
+    #     lines, intervals,
+    #     A._heights, A._frqs)
 
     # 1.5. Get h'(t) and A(t) for all frequencies
     # We need a effective height correction.
@@ -54,6 +54,6 @@ if __name__ == '__main__':
 
 
     # Animation
-    # B = pp.parusAmnimation(filepath, 2)
-    # B.frqNumber = 4
-    # B.start()
+    B = pplt.parusAmnimation(filepath, 2)
+    B.frqNumber = 4
+    B.start()

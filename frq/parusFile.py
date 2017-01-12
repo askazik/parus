@@ -227,11 +227,10 @@ class parusFile(header):
 
     def adjastSearchingIntervals(self, lines):
         """Adjasting all reflections intervals for given approximation.
-        Output heights and haights intervals for level 10 dB.
+        Output heights and height intervals for level 10 dB.
 
         Keyword arguments:
-        lines -- averaged lines array,
-        approximationHeight -- given raw approximation.
+        lines -- averaged lines array.
         """
         # get a possible maximum number of reflections
         amaxs, constraint_lines, first_heights = self.getFirstHeights(lines)
@@ -255,3 +254,24 @@ class parusFile(header):
                 intervals[i,j,2] = intervals[i,j,0] + d_plus
 
         return intervals
+
+    def getThereshold(self, arr):
+        """Get thereshold for np.array.
+
+        Keyword arguments:
+        idTime -- time number (Unit number) from begin of sounding;
+        idFrq -- frequency number.
+        """
+        # 0. Sort given np.array.
+        # Use representative array from number = 30 (60 km).
+        arrSorted = np.sort(arr[30:], axis=0, kind='mergesort')
+        # 1. Get quartiles.
+        n = arr.size
+        Q1 = np.amin((arrSorted[n//4], arrSorted[n//4-1]))
+        Q3 = np.amin((arrSorted[3*n//4], arrSorted[3*n//4-1]))
+        # 2. Get interval.
+        dQ = Q3 - Q1
+        # 3. Get top border of outliers. Search minor outliers.
+        thereshold = Q3 + 1.5 * dQ
+
+        return thereshold

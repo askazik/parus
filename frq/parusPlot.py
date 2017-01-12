@@ -74,6 +74,11 @@ class parusAmnimation(parusFile):
             transform=ax.transAxes)
         self.line, = ax.plot(
             np.zeros(self._heights.shape[0]), self._heights)
+        self.thereshold, = ax.plot(
+            np.zeros(self._heights.shape[0]),
+            self._heights,
+            'g-',
+            label="Outliers thereshold")
 
         avg = self.getAveragedLine(self.frqNumber)
         avg_line = ax.plot(avg, self._heights)
@@ -140,18 +145,20 @@ class parusAmnimation(parusFile):
     # init function.
     def init(self):
         self.animate(0)
-        return self.line, self.timetext
+        return self.line, self.thereshold, self.timetext
 
     # draw function.  This is called sequentially
     def animate(self, i):
         data = self.getUnitFrequency(i, self.frqNumber)
         value = np.absolute(data)
+        thereshold = self.getThereshold(value)
         self.line.set_xdata(value)
+        self.thereshold.set_xdata(np.ones(self._heights.shape[0]) * thereshold)
 
         t = i * self._dt * self._cols / 60  # time in minits
         self.timetext.set_text('{0:8.2f}, min.'.format(t))
 
-        return self.line, self.timetext
+        return self.line, self.thereshold, self.timetext
 
     def start(self):
         # call the animator.
