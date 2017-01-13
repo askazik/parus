@@ -91,7 +91,7 @@ class header(object):
 
 
 class parusFile(header):
-    """Class for reading multifrequencies data from file.
+    """Class for reading multifrequencies data from the big file.
     """
 
     def __init__(self, filename):
@@ -152,6 +152,7 @@ class parusFile(header):
 
         return result
 
+    # get averaged data
     def getAveragedLine(self, idFrq):
         """Get averaged line array for a full time period for
         given sounding frequency.
@@ -160,17 +161,19 @@ class parusFile(header):
         idFrq -- frequency number.
         """
         x = self._mmap[:, idFrq, :]
-        avg_raw = np.int16(np.mean(x, axis=0))
         # two last bytes save channel information
-        avg_shifted = np.right_shift(avg_raw, 2)
+        x_s = np.right_shift(x, 2)
         # get complex amplitude
-        avg_complex = np.array(avg_shifted[::2], dtype=complex)
-        avg_complex.imag = avg_shifted[1::2]
+        x_c = np.array(x_s[:,::2], dtype=complex)
+        x_c.imag = x_s[:,1::2]
         # get absolute numbers
-        avg_abs = np.absolute(avg_complex)
+        x_abs = np.absolute(x_c)
+        # mean by all times
+        x_avg = np.int16(np.mean(x_abs, axis=0))
 
-        return avg_abs
+        return x_avg
 
+    # get averaged data
     def getAllAveragedLines(self):
         """Get averaged lines array for all frequencies for a full
         time period.
@@ -181,17 +184,44 @@ class parusFile(header):
 
         return linesArray
 
-    def adjastReflection(self, lines):
-        """Adjasting first reflection interval for given approximation.
-        Output heights and haights intervals for level 3 dB.
-
-        Keyword arguments:
-        line -- averaged line,
+    # use averaged data
+    def averagedHeights(self):
+        """Get reflection heights for averaged lines.
         """
-        for i in range(self._cols):
-            lines[:, i] = self.getAveragedLine(i)
 
-        return height, dh
+        linesArray = self.getAllAveragedLines()
+        heights = list()
+        for i in range(self._cols):
+            thereshold = self.getThereshold(linesArray[:,i])
+            idxs = np.nonzero(linesArray[:,i] >= thereshold)[0]
+            r_groups = self.getGroups(idxs)
+
+            j = 0
+            frq_heights = np.zeros(len(r_groups))
+            for i_interval in r_groups: # cylce for reflections
+                ampls = linesArray[i_interval, i]
+                hs = self._heights[i_interval]
+                max_ampl_number = np.argmax(ampls)
+                max_ampl_height = hs[max_ampl_number]
+
+                # set height for current interval
+                frq_heights[j] = max_ampl_height
+                j += 1
+            heights.append(frq_heights)
+
+        return heights
+
+    def getGroups(self, idxs):
+        """Get groupped by alone reflections indexes.
+        """
+        i = 0
+        igroups = np.empty(0, dtype=np.int64)
+        for element in idxs[1:]:
+            if element > idxs[i]+1: # border
+                igroups = np.append(igroups,i+1)
+            i += 1
+
+        return np.split(idxs,igroups)
 
     def getFirstHeights(self, lines):
         """Get heights for first reflections for all frequencies.
@@ -201,10 +231,10 @@ class parusFile(header):
         """
         # definition of heights interval for first reflection
         _min = 80
-        _max = 120
+        _max = 140
 
-        idxs = np.where((
-            (self._heights >= _min) & (self._heights <= _max)))[0]
+        idxs = np.nonzero(
+            (self._heights >= _min) & (self._heights <= _max))[0]
         # fill heights
         clines = lines[idxs, :] # use constraints
         a_maxs = np.amax(clines, axis=0)
@@ -219,7 +249,7 @@ class parusFile(header):
         lines -- lines array.
         """
         # get first dirty reflections
-        amaxs, constraint_lines, first_heights = self.getFirstHeights(lines)
+        amaxs, clines, first_heights = self.getFirstHeights(lines)
         # get a possible maximum number of reflections
         n_reflections = (self._heights[-1] // first_heights.max()).astype(int)
 
@@ -232,6 +262,8 @@ class parusFile(header):
         Keyword arguments:
         lines -- averaged lines array.
         """
+        # get reflections heights from averaged lines
+        ave_heights = self.averagedHeights()
         # get a possible maximum number of reflections
         amaxs, constraint_lines, first_heights = self.getFirstHeights(lines)
         n_reflections = (self._heights[-1] // first_heights.max()).astype(int)
