@@ -242,19 +242,6 @@ class parusFile(header):
 
         return a_maxs, clines, self._heights[idxs]
 
-    def getEffectiveHeights(self, lines):
-        """Get effective heights for all frequencies. Use two first reflections.
-
-        Keyword arguments:
-        lines -- lines array.
-        """
-        # get first dirty reflections
-        amaxs, clines, first_heights = self.getFirstHeights(lines)
-        # get a possible maximum number of reflections
-        n_reflections = (self._heights[-1] // first_heights.max()).astype(int)
-
-        return h
-
     def adjastSearchingIntervals(self, lines):
         """Adjasting all reflections intervals for given approximation.
         Output heights and height intervals for level 10 dB.
@@ -264,26 +251,26 @@ class parusFile(header):
         """
         # get reflections heights from averaged lines
         ave_heights = self.averagedHeights()
-        # get a possible maximum number of reflections
-        amaxs, constraint_lines, first_heights = self.getFirstHeights(lines)
-        n_reflections = (self._heights[-1] // first_heights.max()).astype(int)
+        n_reflections = len(ave_heights[0])
 
-        # a_lims = amaxs / 10**(10/20)
-        a_lims = amaxs / np.sqrt(10)
+        # search interval = +/- 5 points !!! It's simple!
+        dn = 5
         intervals = np.zeros((self._cols, n_reflections, 3))
         for i in range(self._cols): # cycle for frequencies
-            # use constraint lines !!!
-            i_into = np.where(constraint_lines[:,i] >= a_lims[i])[0]
-            a_min = constraint_lines[i_into[0], i]
-            a_max = constraint_lines[i_into[-1], i]
-            i_min = np.where(lines[:,i] == a_min)
-            i_max = np.where(lines[:,i] == a_max)
-            d_minus = first_heights[i] - self._heights[i_min[0]]
-            d_plus = self._heights[i_max[0]] - first_heights[i]
+            h_reflections = ave_heights[i]
+
+            # heights correction
+            if n_reflections >= 2:
+                h_eff = h_reflections[1] - h_reflections[0]
+                DH = h_eff - h_reflections[0]
+                self._heights += DH
+                h_reflections += DH
+
             for j in range(n_reflections): # cycle for reflections
-                intervals[i,j,0] = first_heights[i]*(j+1)
-                intervals[i,j,1] = intervals[i,j,0] - d_minus
-                intervals[i,j,2] = intervals[i,j,0] + d_plus
+                intervals[i,j,0] = h_reflections[j]
+                dh = dn * (self._heights[1] - self._heights[0])
+                intervals[i,j,1] = intervals[i,j,0] - dh
+                intervals[i,j,2] = intervals[i,j,0] + dh
 
         return intervals
 

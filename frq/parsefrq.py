@@ -12,10 +12,10 @@ def createParser():
     parser = argparse.ArgumentParser()
     parser.add_argument (
         '-d', '--directory',
-        default='d:\!data\E')
+        default='c:\!data\E')
     parser.add_argument (
         '-f', '--filename',
-        default='20161208053100.frq')
+        default='20161208050700.frq')
 
     return parser
 
@@ -55,6 +55,6 @@ if __name__ == '__main__':
 
 
     # Animation
-    B = pplt.parusAmnimation(filepath, 2)
-    B.frqNumber = 4
-    B.start()
+    # B = pplt.parusAmnimation(filepath, 2)
+    # B.frqNumber = 4
+    # B.start()
