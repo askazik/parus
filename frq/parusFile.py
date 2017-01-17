@@ -184,12 +184,10 @@ class parusFile(header):
 
         return linesArray
 
-    # use averaged data
-    def averagedHeights(self):
-        """Get reflection heights for averaged lines.
+    def getReflectionHeights(self, linesArray):
+        """Get reflection heights for input lines.
         """
 
-        linesArray = self.getAllAveragedLines()
         heights = list()
         for i in range(self._cols):
             thereshold = self.getThereshold(linesArray[:,i])
@@ -223,52 +221,38 @@ class parusFile(header):
 
         return np.split(idxs,igroups)
 
-    def getFirstHeights(self, lines):
-        """Get heights for first reflections for all frequencies.
+    def getSearchingIntervals(self, lines):
+        """Adjasting all reflections intervals for given approximation.
+        Output heights and height intervals is < +/- dn >.
 
         Keyword arguments:
         lines -- lines array.
         """
-        # definition of heights interval for first reflection
-        _min = 80
-        _max = 140
-
-        idxs = np.nonzero(
-            (self._heights >= _min) & (self._heights <= _max))[0]
-        # fill heights
-        clines = lines[idxs, :] # use constraints
-        a_maxs = np.amax(clines, axis=0)
-        idxs = np.where(lines == a_maxs)[0]
-
-        return a_maxs, clines, self._heights[idxs]
-
-    def adjastSearchingIntervals(self, lines):
-        """Adjasting all reflections intervals for given approximation.
-        Output heights and height intervals for level 10 dB.
-
-        Keyword arguments:
-        lines -- averaged lines array.
-        """
         # get reflections heights from averaged lines
-        ave_heights = self.averagedHeights()
+        ave_heights = self.getReflectionHeights(lines)
         n_reflections = len(ave_heights[0])
 
-        # search interval = +/- 5 points !!! It's simple!
-        dn = 5
+        # search interval = +/- 7 points !!! It's simple!
+        dn = 7
         intervals = np.zeros((self._cols, n_reflections, 3))
+        intervals_n = np.zeros((self._cols, n_reflections, 2))
+        dh = dn * (self._heights[1] - self._heights[0])
+
         for i in range(self._cols): # cycle for frequencies
             h_reflections = ave_heights[i]
-
-            # heights correction
-            if n_reflections >= 2:
-                h_eff = h_reflections[1] - h_reflections[0]
-                DH = h_eff - h_reflections[0]
-                self._heights += DH
-                h_reflections += DH
+# --------------------------------------------------------------------
+# Нельзя провести коррекцию высот т.к. мнгновенная высота отражения
+# меняется со временем и возможны странности в определении h'.
+# --------------------------------------------------------------------
+            # # heights correction
+            # if n_reflections >= 2:
+            #     h_eff = h_reflections[1] - h_reflections[0]
+            #     DH = h_eff - h_reflections[0]
+            #     self._heights += DH
+            #     h_reflections += DH
 
             for j in range(n_reflections): # cycle for reflections
                 intervals[i,j,0] = h_reflections[j]
-                dh = dn * (self._heights[1] - self._heights[0])
                 intervals[i,j,1] = intervals[i,j,0] - dh
                 intervals[i,j,2] = intervals[i,j,0] + dh
 
@@ -294,3 +278,37 @@ class parusFile(header):
         thereshold = Q3 + 1.5 * dQ
 
         return thereshold
+
+    def getMomentalReflections(self, intervals):
+        """Get h'(t) and A(t) for all data.
+
+        Keyword arguments:
+        intervals -- searching intervals for reflections.
+        """
+        # get numbers of interval borders
+        i_intervals = (np.divide(
+            intervals,
+            self._heights[1] - self._heights[0])).astype(int)
+
+        # allocate fixed output arrays
+        n_times = self._mmap.shape[0]
+        n_reflections = intervals.shape[1]
+        momentalHeights = np.zeros(
+            (n_times, n_reflections, self._cols))
+        momentalAmplitudes = np.zeros(
+            (n_times, n_reflections, self._cols))
+
+        for i in range(n_times): # by times number
+            lines = self._mmap[i,:,:]
+            unit = self.getUnit(i)
+            abs_unit = np.absolute(unit)
+            for j in range(n_reflections): # by reflections
+                lims = i_intervals[:,j,-2:]
+                for k in range(self._cols): # by frequencies
+                    cur = abs_unit[k, lims[k,0] : lims[k,1]]
+                    i_max = cur.argmax() + lims[k,0]
+                    momentalAmplitudes[i, j, k] = abs_unit[k,i_max]
+                    momentalHeights[i, j, k] = self._heights[i_max]
+
+
+        return momentalHeights, momentalAmplitudes

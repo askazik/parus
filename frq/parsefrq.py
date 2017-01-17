@@ -30,15 +30,22 @@ if __name__ == '__main__':
     A = pf.parusFile(filepath)
     # 1.1. Get averaged lines.
     lines = A.getAllAveragedLines()
-    # 1.3. Get first reflection and searching interval of heights.
-    intervals = A.adjastSearchingIntervals(lines)
-    # 1.4. View averaged plots.
+    # 1.3. Get true reflections and thier searching intervals of heights.
+    intervals = A.getSearchingIntervals(lines)
+    # 1.4. View averaged plots and searching intervals of true reflections.
     axs = pplt.plotLines(
         namespace.filename,
         lines, intervals,
         A._heights, A._frqs)
 
-    # 1.5. Get h(t) and A(t) for all frequencies
+    # 1.5. Get h'(t) and A(t) for all frequencies for all times and
+    # all true reflections.
+# --------------------------------------------------------------------
+# Не учитывается, что число отражений может меняться за время выборки.
+# Возможно и большее и меньшее количество отражений!!!
+# Ошибка вероятна!!!
+# --------------------------------------------------------------------
+    momentalHeights, momentalAmplitudes = A.getMomentalReflections(intervals)
 
 
     # 1.6. Estimation of dh between a radioimpulse sendig and the ADC start.
