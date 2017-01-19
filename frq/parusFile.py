@@ -44,7 +44,7 @@ class header(object):
         self._dt, = 1 / self._header['pulse_frq']
         t = self._header['time']
         tt = (
-            t['year'][0], t['mon'][0], t['mday'][0],
+            t['year'][0]+1900, t['mon'][0], t['mday'][0],
             t['hour'][0], t['min'][0], t['sec'][0],
             t['wday'][0], t['yday'][0], t['isdst'][0])
         self._time = time.struct_time(tt)
@@ -56,6 +56,25 @@ class header(object):
             count_modules)
         self._datapos = self._file.tell()
         self._heights = self.getHeights()
+
+    # property BEGIN
+    @property
+    def name(self):
+        head, tail = os.path.split(self._file.name)
+        return tail
+
+    @property
+    def dt(self):
+        return self._dt
+
+    @property
+    def time(self):
+        return self._time
+
+    @property
+    def frqs(self):
+        return self._frqs
+    # property END
 
     def getHeights(self):
         """Forming the array of heights for real amplitudes.

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Work with data file.
+Fill a Parus database by files data from given directory.
 """
 import os.path as path
 import argparse
