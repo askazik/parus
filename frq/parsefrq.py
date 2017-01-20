@@ -49,14 +49,15 @@ if __name__ == '__main__':
     momentalHeights, momentalAmplitudes = A.getMomentalReflections(intervals)
 
     # Save results in sqlite Database.
-    d = db.parusDB()
-    d.saveResults(
-        A.name,
-        A.time,
-        A.dt,
-        A.frqs,
-        momentalHeights, momentalAmplitudes)
-    d.close()
+    # d = db.parusDB()
+    # d.saveResults(
+    #     A.name,
+    #     A.time,
+    #     A.dt,
+    #     A.frqs,
+    #     momentalHeights, momentalAmplitudes)
+    # d.close()
+    L = A.getAbsorption(momentalHeights, momentalAmplitudes)
 
 
     # 1.6. Estimation of dh between a radioimpulse sendig and the ADC start.

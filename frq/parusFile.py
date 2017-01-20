@@ -3,6 +3,7 @@
 Classes for work with a Parus ionosound data files.
 """
 import numpy as np
+from scipy import linalg
 
 import time
 import os
@@ -329,5 +330,40 @@ class parusFile(header):
                     momentalAmplitudes[i, j, k] = abs_unit[k,i_max]
                     momentalHeights[i, j, k] = self._heights[i_max]
 
-
         return momentalHeights, momentalAmplitudes
+
+    def getAbsorption(self, hs, As):
+        """Calculate absorption for given momental heights and amplitudes.
+
+        Keyword arguments:
+        hs -- momental heights of reflections;
+        As -- momental amplitudes of reflections.
+        """
+
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Caluculate only for two first reflections!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Get h'(t).
+        h = np.subtract(hs[:,1,:],hs[:,0,:])
+        # Get ratio for rho_g and B constants calculate.
+        bn = - np.log10(2 * np.divide(
+            As[:,1,:],
+            np.multiply(h, np.power(As[:,0,:],2))))
+        # Solve Ax=b for each frequencies.
+        b = np.transpose(bn[:,0])
+        A = np.ones((b.size, 2))
+        x = linalg.lstsq(A, b)
+
+        A1 = np.mean(As[:,0,:], 0)
+        A2 = np.mean(As[:,1,:], 0)
+        r1 = 2 * A2 / A1
+        r2 = 2 * np.mean(np.divide(As[:,1,:], As[:,0,:]))
+
+        L = -20*np.log10(2 * A2 / A1)
+
+        # first equation
+        a1 = - np.multiply(h, As[:,0,:])
+        A = np.vstack([a1[:,0], np.ones(len(x))]).T
+        x, residues, rank, s = linalg.lstsq(A, np.zeros((h.size,1)))
+
+        return L
