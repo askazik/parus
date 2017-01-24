@@ -342,28 +342,30 @@ class parusFile(header):
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Caluculate only for two first reflections!
+        # for night !!! rho_g ~ 1
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # Get h'(t).
+        # Get h'(t) and An(t).
         h = np.subtract(hs[:,1,:],hs[:,0,:])
-        # Get ratio for rho_g and B constants calculate.
-        bn = - np.log10(2 * np.divide(
-            As[:,1,:],
-            np.multiply(h, np.power(As[:,0,:],2))))
-        # Solve Ax=b for each frequencies.
-        b = np.transpose(bn[:,0])
-        A = np.ones((b.size, 2))
-        x = linalg.lstsq(A, b)
+        N = As.shape[1] # number of reflections
 
-        A1 = np.mean(As[:,0,:], 0)
-        A2 = np.mean(As[:,1,:], 0)
-        r1 = 2 * A2 / A1
-        r2 = 2 * np.mean(np.divide(As[:,1,:], As[:,0,:]))
+        # 1.
+        # A1 = np.mean(As[:,0,:], 0)
+        # A2 = np.mean(As[:,1,:], 0)
+        # rho = 2 * A2 / A1
+        # L = -20*np.log10(rho)
+        # B = rho / (A1 * np.mean(h))
 
-        L = -20*np.log10(2 * A2 / A1)
+        rho_g = 1
+        A1h = np.mean(As[:,0,:] * h, 0) # for correction with true B
+        if N <= 1:
+            rho = NaN
+            L = NaN
+            B = NaN
+        elif N == 2:
+            rho = 2 * np.mean(As[:,1,:] / As[:,0,:], 0)
+            L = -20*np.log10(rho)
+            B = rho / A1h
+        elif N > 2: # use maximum only 3 reflections
+            pass
 
-        # first equation
-        a1 = - np.multiply(h, As[:,0,:])
-        A = np.vstack([a1[:,0], np.ones(len(x))]).T
-        x, residues, rank, s = linalg.lstsq(A, np.zeros((h.size,1)))
-
-        return L
+        return rho, rho_g, L, B, A1h, N

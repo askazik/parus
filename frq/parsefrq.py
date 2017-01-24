@@ -57,7 +57,7 @@ if __name__ == '__main__':
     #     A.frqs,
     #     momentalHeights, momentalAmplitudes)
     # d.close()
-    L = A.getAbsorption(momentalHeights, momentalAmplitudes)
+    rho, rho_g, L, B, A1h, N = A.getAbsorption(momentalHeights, momentalAmplitudes)
 
 
     # 1.6. Estimation of dh between a radioimpulse sendig and the ADC start.
