@@ -15,8 +15,10 @@ def createParser():
         '-d', '--directory',
         default='c:\!data\E')
     parser.add_argument (
-        '-f', '--filename',
-        default='20161208050700.frq')
+        '-s', '--save',
+        type=boolean,
+        default='true',
+        help='Save in the database.')
 
     return parser
 
@@ -25,7 +27,7 @@ if __name__ == '__main__':
     # 0. Get working parameters.
     parser = createParser()
     namespace = parser.parse_args()
-    filepath = path.join(namespace.directory, namespace.filename)
+    filepath = path.join(namespace.directory, namespace.save)
 
     # 1. Parsing data and collect information.
     A = pf.parusFile(filepath)

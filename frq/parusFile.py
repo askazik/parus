@@ -332,8 +332,8 @@ class parusFile(header):
 
         return momentalHeights, momentalAmplitudes
 
-    def getAbsorption(self, hs, As):
-        """Calculate absorption for given momental heights and amplitudes.
+    def getParameters(self, hs, As):
+        """Calculate parameters for given momental heights and amplitudes.
 
         Keyword arguments:
         hs -- momental heights of reflections;
@@ -344,28 +344,18 @@ class parusFile(header):
         # Caluculate only for two first reflections!
         # for night !!! rho_g ~ 1
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        N = As.shape[1] # number of reflections
         # Get h'(t) and An(t).
         h = np.subtract(hs[:,1,:],hs[:,0,:])
-        N = As.shape[1] # number of reflections
+        h_m = np.mean(h, 0)
+        h_s = np.std(h, 0)
 
-        # 1.
-        # A1 = np.mean(As[:,0,:], 0)
-        # A2 = np.mean(As[:,1,:], 0)
-        # rho = 2 * A2 / A1
-        # L = -20*np.log10(rho)
-        # B = rho / (A1 * np.mean(h))
+        A_m = np.mean(As, 0)
+        A_s = np.std(As, 0)
 
-        rho_g = 1
-        A1h = np.mean(As[:,0,:] * h, 0) # for correction with true B
         if N <= 1:
             rho = NaN
-            L = NaN
-            B = NaN
-        elif N == 2:
-            rho = 2 * np.mean(As[:,1,:] / As[:,0,:], 0)
-            L = -20*np.log10(rho)
-            B = rho / A1h
-        elif N > 2: # use maximum only 3 reflections
-            pass
+        else:
+            rho = 2 * A_m[1,:] / A_m[0,:]
 
-        return rho, rho_g, L, B, A1h, N
+        return rho, h_m, h_s, A_m, A_s
