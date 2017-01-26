@@ -3,8 +3,6 @@
 Classes for work with a Parus ionosound data files.
 """
 import numpy as np
-from scipy import linalg
-
 import time
 import os
 
@@ -184,8 +182,8 @@ class parusFile(header):
         # two last bytes save channel information
         x_s = np.right_shift(x, 2)
         # get complex amplitude
-        x_c = np.array(x_s[:,::2], dtype=complex)
-        x_c.imag = x_s[:,1::2]
+        x_c = np.array(x_s[:, ::2], dtype=complex)
+        x_c.imag = x_s[:, 1::2]
         # get absolute numbers
         x_abs = np.absolute(x_c)
         # mean by all times
@@ -210,13 +208,13 @@ class parusFile(header):
 
         heights = list()
         for i in range(self._cols):
-            thereshold = self.getThereshold(linesArray[:,i])
-            idxs = np.nonzero(linesArray[:,i] >= thereshold)[0]
+            thereshold = self.getThereshold(linesArray[:, i])
+            idxs = np.nonzero(linesArray[:, i] >= thereshold)[0]
             r_groups = self.getGroups(idxs)
 
             j = 0
             frq_heights = np.zeros(len(r_groups))
-            for i_interval in r_groups: # cylce for reflections
+            for i_interval in r_groups:  # cylce for reflections
                 ampls = linesArray[i_interval, i]
                 hs = self._heights[i_interval]
                 max_ampl_number = np.argmax(ampls)
@@ -235,11 +233,11 @@ class parusFile(header):
         i = 0
         igroups = np.empty(0, dtype=np.int64)
         for element in idxs[1:]:
-            if element > idxs[i]+1: # border
-                igroups = np.append(igroups,i+1)
+            if element > idxs[i]+1:  # border
+                igroups = np.append(igroups, i+1)
             i += 1
 
-        return np.split(idxs,igroups)
+        return np.split(idxs, igroups)
 
     def getSearchingIntervals(self, lines):
         """Adjasting all reflections intervals for given approximation.
@@ -255,14 +253,15 @@ class parusFile(header):
         # search interval = +/- 7 points !!! It's simple!
         dn = 7
         intervals = np.zeros((self._cols, n_reflections, 3))
-        intervals_n = np.zeros((self._cols, n_reflections, 2))
+        # intervals_n = np.zeros((self._cols, n_reflections, 2))
         dh = dn * (self._heights[1] - self._heights[0])
 
-        for i in range(self._cols): # cycle for frequencies
+        for i in range(self._cols):  # cycle for frequencies
             h_reflections = ave_heights[i]
 # --------------------------------------------------------------------
-# Нельзя провести коррекцию высот т.к. мнгновенная высота отражения
-# меняется со временем и возможны странности в определении h'.
+# Нельзя провести коррекцию высот т.к. мнгновенная высота
+# отражения меняется со временем и возможны странности в
+# определении h'.
 # --------------------------------------------------------------------
             # # heights correction
             # if n_reflections >= 2:
@@ -271,10 +270,10 @@ class parusFile(header):
             #     self._heights += DH
             #     h_reflections += DH
 
-            for j in range(n_reflections): # cycle for reflections
-                intervals[i,j,0] = h_reflections[j]
-                intervals[i,j,1] = intervals[i,j,0] - dh
-                intervals[i,j,2] = intervals[i,j,0] + dh
+            for j in range(n_reflections):  # cycle for reflections
+                intervals[i, j, 0] = h_reflections[j]
+                intervals[i, j, 1] = intervals[i, j, 0] - dh
+                intervals[i, j, 2] = intervals[i, j, 0] + dh
 
         return intervals
 
@@ -289,7 +288,7 @@ class parusFile(header):
         # Use representative array from number = 30 (60 km).
         arrSorted = np.sort(arr[30:], axis=0, kind='mergesort')
         # 1. Get quartiles.
-        n = arr.size
+        n = arrSorted.size
         Q1 = np.amin((arrSorted[n//4], arrSorted[n//4-1]))
         Q3 = np.amin((arrSorted[3*n//4], arrSorted[3*n//4-1]))
         # 2. Get interval.
@@ -318,16 +317,16 @@ class parusFile(header):
         momentalAmplitudes = np.zeros(
             (n_times, n_reflections, self._cols))
 
-        for i in range(n_times): # by times number
-            lines = self._mmap[i,:,:]
+        for i in range(n_times):  # by times number
+            # lines = self._mmap[i, :, :]
             unit = self.getUnit(i)
             abs_unit = np.absolute(unit)
-            for j in range(n_reflections): # by reflections
-                lims = i_intervals[:,j,-2:]
-                for k in range(self._cols): # by frequencies
-                    cur = abs_unit[k, lims[k,0] : lims[k,1]]
-                    i_max = cur.argmax() + lims[k,0]
-                    momentalAmplitudes[i, j, k] = abs_unit[k,i_max]
+            for j in range(n_reflections):  # by reflections
+                lims = i_intervals[:, j, -2:]
+                for k in range(self._cols):  # by frequencies
+                    cur = abs_unit[k, lims[k, 0]: lims[k, 1]]
+                    i_max = cur.argmax() + lims[k, 0]
+                    momentalAmplitudes[i, j, k] = abs_unit[k, i_max]
                     momentalHeights[i, j, k] = self._heights[i_max]
 
         return momentalHeights, momentalAmplitudes
@@ -344,9 +343,9 @@ class parusFile(header):
         # Caluculate only for two first reflections!
         # for night !!! rho_g ~ 1
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        N = As.shape[1] # number of reflections
+        N = As.shape[1]  # number of reflections
         # Get h'(t) and An(t).
-        h = np.subtract(hs[:,1,:],hs[:,0,:])
+        h = np.subtract(hs[:, 1, :], hs[:, 0, :])
         h_m = np.mean(h, 0)
         h_s = np.std(h, 0)
 
@@ -354,8 +353,8 @@ class parusFile(header):
         A_s = np.std(As, 0)
 
         if N <= 1:
-            rho = NaN
+            rho = np.NaN
         else:
-            rho = 2 * A_m[1,:] / A_m[0,:]
+            rho = 2 * A_m[1, :] / A_m[0, :]
 
         return rho, h_m, h_s, A_m, A_s

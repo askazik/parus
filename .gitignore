@@ -8,3 +8,4 @@ P14X3M01.HEX
 *.lock
 #*#
 *.desktop
+*.sqlite
