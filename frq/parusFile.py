@@ -251,7 +251,7 @@ class parusFile(header):
         n_reflections = len(ave_heights[0])
 
         # search interval = +/- 7 points !!! It's simple!
-        dn = 7
+        dn = 10
         intervals = np.zeros((self._cols, n_reflections, 3))
         # intervals_n = np.zeros((self._cols, n_reflections, 2))
         dh = dn * (self._heights[1] - self._heights[0])
@@ -317,12 +317,15 @@ class parusFile(header):
         momentalAmplitudes = np.zeros(
             (n_times, n_reflections, self._cols))
 
+        # critical for file version 0 and 2 !!!
+        h_base = (self._heights[0]/
+                      (self._heights[1]-self._heights[0])).astype(int)
         for i in range(n_times):  # by times number
             # lines = self._mmap[i, :, :]
             unit = self.getUnit(i)
             abs_unit = np.absolute(unit)
             for j in range(n_reflections):  # by reflections
-                lims = i_intervals[:, j, -2:]
+                lims = i_intervals[:, j, -2:] - h_base
                 for k in range(self._cols):  # by frequencies
                     cur = abs_unit[k, lims[k, 0]: lims[k, 1]]
                     i_max = cur.argmax() + lims[k, 0]
@@ -345,16 +348,16 @@ class parusFile(header):
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         N = As.shape[1]  # number of reflections
         # Get h'(t) and An(t).
-        h = np.subtract(hs[:, 1, :], hs[:, 0, :])
-        h_m = np.mean(h, 0)
-        h_s = np.std(h, 0)
-
         A_m = np.mean(As, 0)
         A_s = np.std(As, 0)
 
         if N <= 1:
             rho = np.NaN
+            h = hs #  if N == 1
         else:
+            h = np.subtract(hs[:, 1, :], hs[:, 0, :])
             rho = 2 * A_m[1, :] / A_m[0, :]
+        h_m = np.mean(h, 0)
+        h_s = np.std(h, 0)
 
         return rho, h_m, h_s, A_m, A_s
