@@ -40,15 +40,16 @@ class header(object):
              ('count_modules', 'I'),  # number of modules/frequencies
              ('pulse_frq', 'I')])   # switching frequency, Hz
         self._header = np.fromfile(self._file, _dtype, count=1)
-        self._dt, = 1 / self._header['pulse_frq']
+
+        count_modules, = self._header['count_modules']
+        self._dt, = count_modules / self._header['pulse_frq']
         t = self._header['time']
         tt = (
-            t['year'][0]+1900, t['mon'][0], t['mday'][0],
+            t['year'][0]+1900, t['mon'][0]+1, t['mday'][0],
             t['hour'][0], t['min'][0], t['sec'][0],
             t['wday'][0], t['yday'][0], t['isdst'][0])
         self._time = time.struct_time(tt)
         # Reading of sounding frequencies, Hz
-        count_modules, = self._header['count_modules']
         self._frqs = np.fromfile(
             self._file,
             np.dtype(np.uint32),
@@ -210,19 +211,22 @@ class parusFile(header):
         for i in range(self._cols):
             thereshold = self.getThereshold(linesArray[:, i])
             idxs = np.nonzero(linesArray[:, i] >= thereshold)[0]
-            r_groups = self.getGroups(idxs)
+            if idxs.size:
+                r_groups = self.getGroups(idxs)
 
-            j = 0
-            frq_heights = np.zeros(len(r_groups))
-            for i_interval in r_groups:  # cylce for reflections
-                ampls = linesArray[i_interval, i]
-                hs = self._heights[i_interval]
-                max_ampl_number = np.argmax(ampls)
-                max_ampl_height = hs[max_ampl_number]
+                j = 0
+                frq_heights = np.zeros(len(r_groups))
+                for i_interval in r_groups:  # cylce for reflections
+                    ampls = linesArray[i_interval, i]
+                    hs = self._heights[i_interval]
+                    max_ampl_number = np.argmax(ampls)
+                    max_ampl_height = hs[max_ampl_number]
 
-                # set height for current interval
-                frq_heights[j] = max_ampl_height
-                j += 1
+                    # set height for current interval
+                    frq_heights[j] = max_ampl_height
+                    j += 1
+            else:
+                frq_heights = np.NaN(1)  # no reflections
             heights.append(frq_heights)
 
         return heights
@@ -251,7 +255,7 @@ class parusFile(header):
         n_reflections = len(ave_heights[0])
 
         # search interval = +/- 7 points !!! It's simple!
-        dn = 10
+        dn = 7
         intervals = np.zeros((self._cols, n_reflections, 3))
         # intervals_n = np.zeros((self._cols, n_reflections, 2))
         dh = dn * (self._heights[1] - self._heights[0])
@@ -318,7 +322,7 @@ class parusFile(header):
             (n_times, n_reflections, self._cols))
 
         # critical for file version 0 and 2 !!!
-        h_base = (self._heights[0]/
+        h_base = (self._heights[0] /
                       (self._heights[1]-self._heights[0])).astype(int)
         for i in range(n_times):  # by times number
             # lines = self._mmap[i, :, :]
@@ -353,7 +357,7 @@ class parusFile(header):
 
         if N <= 1:
             rho = np.NaN
-            h = hs #  if N == 1
+            h = hs  # if N == 1
         else:
             h = np.subtract(hs[:, 1, :], hs[:, 0, :])
             rho = 2 * A_m[1, :] / A_m[0, :]

@@ -6,7 +6,9 @@ import os.path as path
 import argparse
 import glob
 
-import parusDB as db
+from datetime import datetime
+import sqlite3
+
 import parusFile as pf
 # import parusPlot as pplt
 
@@ -27,7 +29,12 @@ if __name__ == '__main__':
     namespace = parser.parse_args()
     names = glob.glob(path.join(namespace.directory, '*.frq'))
 
-    d = db.parusDB()
+    # Create a connection and cursor to your database
+    conn = sqlite3.connect('parus.sqlite')
+    cur = conn.cursor()
+    # In sqlite3 foreign key constraints are disabled by default
+    # for performance reasons. PRAGMA statement enables them.
+    cur.execute("PRAGMA foreign_keys = ON")
     for name in names:
         # 1. Parsing data and collect information.
         A = pf.parusFile(name)
@@ -49,10 +56,24 @@ if __name__ == '__main__':
             momentalAmplitudes)
 
         # 1.5. Save results in sqlite Database.
-        # d.saveResults(
-        #     A.name,
-        #     A.time,
-        #     A.dt,
-        #     A.frqs,
-        #     momentalHeights, momentalAmplitudes)
-    d.close()
+        # Insert file
+        ftime = datetime(*A.time[:6])
+        cur.execute('insert into files '
+                    '(filename, time, dt, dh) values (?,?,?,?)', (
+                        A.name,
+                        ftime,
+                        A.dt,
+                        A._heights[1] - A._heights[0]))
+        # The python module puts the last row id inserted into
+        # a variable on the cursor
+        #file_id = cur.lastrowid
+        # Insert frequencies
+        #cur.execute("""INSERT INTO frequencies VALUES(NULL, 'spot')""")
+        #frq_id = cur.lastrowid
+        # Insert amplitude
+        #cur.execute("""INSERT INTO amplitudes VALUES(?, ?)""", (bobby_id, spot_id));
+        # Commit
+        conn.commit()
+        print(A._file.name)
+
+    conn.close()

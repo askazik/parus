@@ -7,8 +7,6 @@ import numpy as np
 import sqlite3
 import io
 
-import parusFile as pf
-
 
 class parusDB(object):
     "Class for work with sqlite3 database for Parus data."
