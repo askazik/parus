@@ -38,6 +38,7 @@ if __name__ == '__main__':
     for name in names:
         # 1. Parsing data and collect information.
         A = pf.parusFile(name)
+        print(A._file.name)
         # 1.1. Get averaged lines.
         lines = A.getAllAveragedLines()
         # 1.3. Get true reflections and thier searching intervals of heights.
@@ -74,6 +75,6 @@ if __name__ == '__main__':
         #cur.execute("""INSERT INTO amplitudes VALUES(?, ?)""", (bobby_id, spot_id));
         # Commit
         conn.commit()
-        print(A._file.name)
+        print('Well done. Try next file.')
 
     conn.close()

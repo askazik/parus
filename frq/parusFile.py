@@ -140,6 +140,21 @@ class parusFile(header):
             shape=(self._units, self._cols, self._rows),
             order='C')
 
+        # First reflection interval, km
+        self._first_min = 90
+        self._first_max = 120
+
+    # property BEGIN
+    @property
+    def first_min(self):
+        return self._first_min
+
+    @property
+    def first_max(self):
+        return self._first_max
+
+    # property END
+
     def getUnit(self, idTime):
         """Get multifrequence data unit with complex amplitudes.
 
@@ -212,6 +227,9 @@ class parusFile(header):
             thereshold = self.getThereshold(linesArray[:, i])
             idxs = np.nonzero(linesArray[:, i] >= thereshold)[0]
             if idxs.size:
+                # get only true reflections
+                idxs = reflectionsFilter(idxs)
+                # split reflections by number
                 r_groups = self.getGroups(idxs)
 
                 j = 0
@@ -226,10 +244,15 @@ class parusFile(header):
                     frq_heights[j] = max_ampl_height
                     j += 1
             else:
-                frq_heights = np.NaN(1)  # no reflections
+                frq_heights = np.NaN  # no reflections
             heights.append(frq_heights)
 
         return heights
+
+    def reflectionsFilter(self, heights_idxs)
+        """Filter only true reflections intervals
+        """
+        
 
     def getGroups(self, idxs):
         """Get groupped by alone reflections indexes.
