@@ -10,7 +10,7 @@ from datetime import datetime
 import sqlite3
 
 import parusFile as pf
-# import parusPlot as pplt
+import parusPlot as pplt
 
 
 def createParser():
@@ -38,33 +38,31 @@ if __name__ == '__main__':
     for name in names:
         # 1. Parsing data and collect information.
         A = pf.parusFile(name)
+        #An = pplt.parusAmnimation(name, 4)
+        #An.start()
         print(A._file.name)
         # 1.1. Get averaged lines.
         lines = A.getAllAveragedLines()
         # 1.3. Get true reflections and thier searching intervals of heights.
         intervals = A.getSearchingIntervals(lines)
+        print(intervals)
         # 1.4. Get h'(t) and A(t) for all frequencies for all times and
         # all true reflections.
-# --------------------------------------------------------------------
-# Не учитывается, что число отражений может меняться за время выборки.
-# Возможно и большее и меньшее количество отражений!!!
-# Ошибка вероятна!!!
-# --------------------------------------------------------------------
-        momentalHeights, momentalAmplitudes = A.getMomentalReflections(
-            intervals)
-        rho, h_m, h_s, A_m, A_s = A.getParameters(
-            momentalHeights,
-            momentalAmplitudes)
+        # momentalHeights, momentalAmplitudes = A.getMomentalReflections(
+        #     intervals)
+        # rho, h_m, h_s, A_m, A_s = A.getParameters(
+        #     momentalHeights,
+        #     momentalAmplitudes)
 
         # 1.5. Save results in sqlite Database.
         # Insert file
-        ftime = datetime(*A.time[:6])
-        cur.execute('insert into files '
-                    '(filename, time, dt, dh) values (?,?,?,?)', (
-                        A.name,
-                        ftime,
-                        A.dt,
-                        A._heights[1] - A._heights[0]))
+        # ftime = datetime(*A.time[:6])
+        # cur.execute('insert into files '
+        #             '(filename, time, dt, dh) values (?,?,?,?)', (
+        #                 A.name,
+        #                 ftime,
+        #                 A.dt,
+        #                 A._heights[1] - A._heights[0]))
         # The python module puts the last row id inserted into
         # a variable on the cursor
         #file_id = cur.lastrowid
@@ -74,7 +72,7 @@ if __name__ == '__main__':
         # Insert amplitude
         #cur.execute("""INSERT INTO amplitudes VALUES(?, ?)""", (bobby_id, spot_id));
         # Commit
-        conn.commit()
+        # conn.commit()
         print('Well done. Try next file.')
 
     conn.close()

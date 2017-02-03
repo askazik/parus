@@ -155,7 +155,7 @@ class parusAmnimation(parusFile):
         self.line.set_xdata(value)
         self.thereshold.set_xdata(np.ones(self._heights.shape[0]) * thereshold)
 
-        t = i * self._dt * self._cols / 60  # time in minits
+        t = i * self._dt / 60  # time in minits
         self.timetext.set_text('{0:8.2f}, min.'.format(t))
 
         return self.line, self.thereshold, self.timetext

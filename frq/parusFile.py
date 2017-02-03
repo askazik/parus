@@ -228,7 +228,7 @@ class parusFile(header):
             idxs = np.nonzero(linesArray[:, i] >= thereshold)[0]
             if idxs.size:
                 # get only true reflections
-                idxs = reflectionsFilter(idxs)
+                idxs = self.reflectionsFilter(idxs)
                 # split reflections by number
                 r_groups = self.getGroups(idxs)
 
@@ -249,10 +249,30 @@ class parusFile(header):
 
         return heights
 
-    def reflectionsFilter(self, heights_idxs)
+    def reflectionsFilter(self, heights_idxs):
         """Filter only true reflections intervals
         """
-        
+        idxs_out = np.array([], dtype=np.int64)  # create empty output array
+
+        i_old = 1  # reflection number
+        i_new = i_old
+        h_min = self._first_min
+        h_max = self._first_max
+        dh = h_max - h_min
+        for idx in heights_idxs:  # check input array elements
+            h = self._heights[idx]
+            if h >= h_min and h <= h_max:
+                idxs_out = np.append(idxs_out, idx)
+            elif h > h_max and i_old == i_new:
+                i_new += 1
+
+            # change reflection number
+            if i_new > i_old:
+                i_old = i_new
+                h_min = i_old * self._first_min
+                h_max = h_min + dh
+
+        return idxs_out
 
     def getGroups(self, idxs):
         """Get groupped by alone reflections indexes.
@@ -275,32 +295,22 @@ class parusFile(header):
         """
         # get reflections heights from averaged lines
         ave_heights = self.getReflectionHeights(lines)
-        n_reflections = len(ave_heights[0])
 
         # search interval = +/- 7 points !!! It's simple!
         dn = 7
-        intervals = np.zeros((self._cols, n_reflections, 3))
-        # intervals_n = np.zeros((self._cols, n_reflections, 2))
+        N = 4  # max 4 reflections
+        intervals = np.zeros((self._cols, N, 3))
+        intervals.fill(np.NaN)
         dh = dn * (self._heights[1] - self._heights[0])
 
         for i in range(self._cols):  # cycle for frequencies
             h_reflections = ave_heights[i]
-# --------------------------------------------------------------------
-# Нельзя провести коррекцию высот т.к. мнгновенная высота
-# отражения меняется со временем и возможны странности в
-# определении h'.
-# --------------------------------------------------------------------
-            # # heights correction
-            # if n_reflections >= 2:
-            #     h_eff = h_reflections[1] - h_reflections[0]
-            #     DH = h_eff - h_reflections[0]
-            #     self._heights += DH
-            #     h_reflections += DH
-
-            for j in range(n_reflections):  # cycle for reflections
-                intervals[i, j, 0] = h_reflections[j]
-                intervals[i, j, 1] = intervals[i, j, 0] - dh
-                intervals[i, j, 2] = intervals[i, j, 0] + dh
+            if not np.isnan(h_reflections) and h_reflections.size:
+                # на одной из частот могут быть отражения
+                for j in range(h_reflections.size):  # cycle for reflections
+                    intervals[i, j, 0] = h_reflections[j]
+                    intervals[i, j, 1] = intervals[i, j, 0] - dh
+                    intervals[i, j, 2] = intervals[i, j, 0] + dh
 
         return intervals
 
