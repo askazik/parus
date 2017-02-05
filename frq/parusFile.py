@@ -109,6 +109,210 @@ class header(object):
         return heights
 
 
+class parusIntervals(object):
+    """Class for define of heights intervals."""
+
+    def __init__(self, nfrq=5, nref=4, dh=30, h1=90):
+        """Init data unit.
+
+        Keyword arguments:
+        nfrq -- number of frequencies;
+        nref -- number of reflections (height intervals for any frequency);
+        dh -- heights intervals length (for all frequencies), km;
+        h1 -- scalar/array of heights for the first reflection
+        (for all frequencies), km.
+
+        Example:
+        I1 = pf.parusIntervals()
+        I2 = pf.parusIntervals(dh=20, h1=[90, 95, 100, 105, 110])
+        I2 = pf.parusIntervals(dh=20, h1=(90, 95, 100, 105, 110))
+        """
+        super().__init__()
+
+        # unsupported types combination of input variables
+        if (not isinstance(nfrq, int) or
+            not isinstance(nref, int) or
+            not isinstance(dh, (float, int))):
+            raise ValueError(
+                'Unsupported size combination of input variables '
+                '<nfrq>, <nref>, <dh>!')
+
+        self._intervals = np.zeros((nfrq, nref, 2))
+        if isinstance(h1, (float, int)):
+            # first reflectoion heights and dh are equal for all frequencies
+            self.fillIntervalsForScalar(dh, h1)
+        elif isinstance(h1, (list, tuple)) and len(h1) == nfrq:
+            # first reflectoion heights and dh are distinct for frequencies
+            self.fillIntervalsForArray(dh, h1)
+        else:  # unsupported combination of input variables
+            raise ValueError(
+                'Unsupported dimension of the input <h1> variable!')
+
+    # property BEGIN
+
+    @property
+    def intervals(self):
+        return self._intervals
+
+    # property END
+
+    def fillIntervalsForArray(self, dh, h1):
+        """Fill array of heights intervals for array of h1.
+
+        Keyword argument:
+        dh -- heights intervals length (for all frequencies), km;
+        h1 -- array of heights for the first reflection, km.
+        """
+        shape = self._intervals.shape
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                self._intervals[i, j, 0] = h1[i] * (j + 1)
+                self._intervals[i, j, 1] = self._intervals[i, j, 0] + dh
+
+    def fillIntervalsForScalar(self, dh, h1):
+        """Fill array of heights intervals for scalar h1.
+
+        Keyword argument:
+        dh -- heights intervals length (for all frequencies), km;
+        h1 -- height of the first reflection, km.
+        """
+        shape = self._intervals.shape
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                self._intervals[i, j, 0] = h1 * (j + 1)
+                self._intervals[i, j, 1] = self._intervals[i, j, 0] + dh
+
+
+class parusUnit(object):
+    """Class for parsing of multifrequencies unit of a data file."""
+
+    def __init__(self, unit, heights, intervals_obj):
+        """Init data unit.
+
+        Keyword argument:
+        unit -- complex array from getUnit(self, idTime), parusFile;
+        heights -- heights array;
+        intervals -- searching reflections only in given intervals.
+        """
+        super().__init__()
+        self._unit = unit
+        self._heights = heights
+        self._intervals = intervals_obj.intervals
+
+        # output
+        seq = (
+            'theresholds', 'means', 'medians', 'stds',
+            'heights', 'amplitudes')
+        self._parameters = dict.fromkeys(seq)
+
+    # property BEGIN
+
+    @property
+    def parameters(self):
+        shape = self._intervals.shape
+        n_frqs = shape[0]
+        n_refs = shape[1]
+
+        theresholds = np.empty(n_frqs)
+        theresholds[:] = np.NaN
+        means = np.empty(n_frqs)
+        means[:] = np.NaN
+        medians = np.empty(n_frqs)
+        medians[:] = np.NaN
+        stds = np.empty(n_frqs)
+        stds[:] = np.NaN
+        heights = np.empty([n_frqs, n_refs])
+        heights[:] = np.NaN
+        amplitudes = np.empty([n_frqs, n_refs], dtype=complex)
+        amplitudes[:] = np.NaN
+        on_border = np.zeros([n_frqs, n_refs], dtype=int)
+        for i in range(n_frqs):
+            arr = self._unit[i, :]
+            abs_arr = np.abs(arr)
+            theresholds[i] = self.getThereshold(abs_arr)
+            means[i] = np.mean(abs_arr)
+            medians[i] = np.median(abs_arr)
+            stds[i] = np.std(abs_arr)
+            idxs, is_on_border = self.getReflections(
+                abs_arr,
+                theresholds[i],
+                self._intervals[i])
+            on_border[i, :] = is_on_border
+
+            idxs_filtered = np.nonzero(idxs != -9999)[0]
+            heights[i, idxs_filtered] = self._heights[idxs_filtered]
+            amplitudes[i, idxs_filtered] = arr[idxs_filtered]  # complex!!!
+
+        self._parameters['theresholds'] = theresholds
+        self._parameters['means'] = means
+        self._parameters['medians'] = medians
+        self._parameters['stds'] = stds
+        self._parameters['on_border'] = on_border
+        self._parameters['heights'] = heights
+        self._parameters['amplitudes'] = amplitudes
+
+        return self._parameters
+
+    # property END
+
+    def getThereshold(self, arr):
+        """Get thereshold for np.array.
+
+        Keyword arguments:
+        idTime -- time number (Unit number) from begin of sounding;
+        idFrq -- frequency number.
+        """
+        # 0. Sort given np.array.
+        # Use representative array from number = 30 (60 km).
+        arrSorted = np.sort(arr[30:], axis=0, kind='mergesort')
+        # 1. Get quartiles.
+        n = arrSorted.size
+        Q1 = np.amin((arrSorted[n//4], arrSorted[n//4-1]))
+        Q3 = np.amin((arrSorted[3*n//4], arrSorted[3*n//4-1]))
+        # 2. Get interval.
+        dQ = Q3 - Q1
+        # 3. Get top border of outliers. Search minor outliers.
+        thereshold = Q3 + 1.5 * dQ
+
+        return thereshold
+
+    def getReflections(self, arr, thereshold, intervals):
+        """Get reflection height for input lines.
+
+        Return indexes of reflections or NaN if no reflection.
+        Return key is reflection on min(1)/max(2) interval limits.
+        """
+
+        n_refs = intervals.shape[0]
+        indexes = np.empty(n_refs, dtype=np.int)
+        indexes[:] = -9999  # special no-value key
+        is_on_border = np.zeros(n_refs, dtype=np.int)  # best quality
+        is_on_border[:] = -9999
+
+        i_ampl = np.nonzero(arr >= thereshold)[0]
+        if i_ampl.size:
+            for i in range(n_refs):
+                i_min = np.nonzero(
+                    self._heights[i_ampl] >= intervals[i, 0])[0]
+                if i_min.size:
+                    i_max = i_min[0] + np.nonzero(
+                        self._heights[i_min] <= intervals[i, 1])[0]
+                    ind = np.argmax(arr[i_max])
+                    indexes[i] = i_max[ind]
+
+                    # get quality of finding extremum
+                    if indexes[i] == i_max[0]:
+                        is_on_border[i] = 1
+                    elif indexes[i] == i_max[-1]:
+                        is_on_border[i] = 2
+                    elif i_max[-1].size == 1:
+                        is_on_border[i] = 3
+                    else:
+                        is_on_border[i] = 0
+
+        return indexes, is_on_border
+
+
 class parusFile(header):
     """Class for reading multifrequencies data from the big file.
     """
@@ -140,18 +344,16 @@ class parusFile(header):
             shape=(self._units, self._cols, self._rows),
             order='C')
 
-        # First reflection interval, km
-        self._first_min = 90
-        self._first_max = 120
+        # Simple intervals define, km
+        self._intervals = parusIntervals()
 
     # property BEGIN
-    @property
-    def first_min(self):
-        return self._first_min
+    def intervals(self):
+        _intervals = self._intervals.intervals
+        return _intervals
 
-    @property
-    def first_max(self):
-        return self._first_max
+    def heights(self):
+        return self._heights
 
     # property END
 
@@ -167,24 +369,25 @@ class parusFile(header):
         # get complex amplitude
         result = np.array(raw_shifted[:, ::2], dtype=complex)
         result.imag = raw_shifted[:, 1::2]
+        unit = parusUnit(result, self._heights, self._intervals)
 
-        return result
+        return unit
 
-    def getUnitFrequency(self, idTime, idFrq):
-        """Get one-frequence complex amplitudes.
+    # def getUnitFrequency(self, idTime, idFrq):
+    #     """Get one-frequence complex amplitudes.
 
-        Keyword arguments:
-        idTime -- time number (Unit number) from begin of sounding;
-        idFrq -- frequency number.
-        """
-        raw = self._mmap[idTime, idFrq, :]
-        # two last bytes save channel information
-        raw_shifted = np.right_shift(raw, 2)
-        # get complex amplitude
-        result = np.array(raw_shifted[::2], dtype=complex)
-        result.imag = raw_shifted[1::2]
+    #     Keyword arguments:
+    #     idTime -- time number (Unit number) from begin of sounding;
+    #     idFrq -- frequency number.
+    #     """
+    #     raw = self._mmap[idTime, idFrq, :]
+    #     # two last bytes save channel information
+    #     raw_shifted = np.right_shift(raw, 2)
+    #     # get complex amplitude
+    #     result = np.array(raw_shifted[::2], dtype=complex)
+    #     result.imag = raw_shifted[1::2]
 
-        return result
+    #     return result
 
     # get averaged data
     def getAveragedLine(self, idFrq):
@@ -218,36 +421,36 @@ class parusFile(header):
 
         return linesArray
 
-    def getReflectionHeights(self, linesArray):
-        """Get reflection heights for input lines.
-        """
+    # def getReflectionHeights(self, linesArray):
+    #     """Get reflection heights for input lines.
+    #     """
 
-        heights = list()
-        for i in range(self._cols):
-            thereshold = self.getThereshold(linesArray[:, i])
-            idxs = np.nonzero(linesArray[:, i] >= thereshold)[0]
-            if idxs.size:
-                # get only true reflections
-                idxs = self.reflectionsFilter(idxs)
-                # split reflections by number
-                r_groups = self.getGroups(idxs)
+    #     heights = list()
+    #     for i in range(self._cols):
+    #         thereshold = self.getThereshold(linesArray[:, i])
+    #         idxs = np.nonzero(linesArray[:, i] >= thereshold)[0]
+    #         if idxs.size:
+    #             # get only true reflections
+    #             idxs = self.reflectionsFilter(idxs)
+    #             # split reflections by number
+    #             r_groups = self.getGroups(idxs)
 
-                j = 0
-                frq_heights = np.zeros(len(r_groups))
-                for i_interval in r_groups:  # cylce for reflections
-                    ampls = linesArray[i_interval, i]
-                    hs = self._heights[i_interval]
-                    max_ampl_number = np.argmax(ampls)
-                    max_ampl_height = hs[max_ampl_number]
+    #             j = 0
+    #             frq_heights = np.zeros(len(r_groups))
+    #             for i_interval in r_groups:  # cylce for reflections
+    #                 ampls = linesArray[i_interval, i]
+    #                 hs = self._heights[i_interval]
+    #                 max_ampl_number = np.argmax(ampls)
+    #                 max_ampl_height = hs[max_ampl_number]
 
-                    # set height for current interval
-                    frq_heights[j] = max_ampl_height
-                    j += 1
-            else:
-                frq_heights = np.NaN  # no reflections
-            heights.append(frq_heights)
+    #                 # set height for current interval
+    #                 frq_heights[j] = max_ampl_height
+    #                 j += 1
+    #         else:
+    #             frq_heights = np.NaN  # no reflections
+    #         heights.append(frq_heights)
 
-        return heights
+    #     return heights
 
     def reflectionsFilter(self, heights_idxs):
         """Filter only true reflections intervals
@@ -314,26 +517,26 @@ class parusFile(header):
 
         return intervals
 
-    def getThereshold(self, arr):
-        """Get thereshold for np.array.
+    # def getThereshold(self, arr):
+    #     """Get thereshold for np.array.
 
-        Keyword arguments:
-        idTime -- time number (Unit number) from begin of sounding;
-        idFrq -- frequency number.
-        """
-        # 0. Sort given np.array.
-        # Use representative array from number = 30 (60 km).
-        arrSorted = np.sort(arr[30:], axis=0, kind='mergesort')
-        # 1. Get quartiles.
-        n = arrSorted.size
-        Q1 = np.amin((arrSorted[n//4], arrSorted[n//4-1]))
-        Q3 = np.amin((arrSorted[3*n//4], arrSorted[3*n//4-1]))
-        # 2. Get interval.
-        dQ = Q3 - Q1
-        # 3. Get top border of outliers. Search minor outliers.
-        thereshold = Q3 + 1.5 * dQ
+    #     Keyword arguments:
+    #     idTime -- time number (Unit number) from begin of sounding;
+    #     idFrq -- frequency number.
+    #     """
+    #     # 0. Sort given np.array.
+    #     # Use representative array from number = 30 (60 km).
+    #     arrSorted = np.sort(arr[30:], axis=0, kind='mergesort')
+    #     # 1. Get quartiles.
+    #     n = arrSorted.size
+    #     Q1 = np.amin((arrSorted[n//4], arrSorted[n//4-1]))
+    #     Q3 = np.amin((arrSorted[3*n//4], arrSorted[3*n//4-1]))
+    #     # 2. Get interval.
+    #     dQ = Q3 - Q1
+    #     # 3. Get top border of outliers. Search minor outliers.
+    #     thereshold = Q3 + 1.5 * dQ
 
-        return thereshold
+    #     return thereshold
 
     def getMomentalReflections(self, intervals):
         """Get h'(t) and A(t) for all data.
@@ -398,3 +601,39 @@ class parusFile(header):
         h_s = np.std(h, 0)
 
         return rho, h_m, h_s, A_m, A_s
+
+    def calculate(self):
+        """
+        """
+        # allocate fixed output arrays
+        n_times = self._mmap.shape[0]
+        shape = self._intervals.intervals.shape
+        n_frqs = shape[0]
+        n_refs = shape[1]
+        ampls = np.ma.empty([n_times, n_frqs, n_refs])
+        hs = np.ma.empty([n_times, n_frqs, n_refs])
+        for i in range(n_times):  # by times number
+            iUnit = self.getUnit(i)
+            param = iUnit.parameters
+
+            # use masked array for get true data
+            # http://koldunov.net/?p=356
+            quality = param['on_border']
+            Masked_Ampl = np.ma.array(
+                param['amplitudes'],
+                mask=(quality != 0),
+                copy=True)
+            Masked_Heights = np.ma.array(
+                param['heights'],
+                mask=(quality != 0),
+                copy=True)
+
+            ampls[i, :, :] = Masked_Ampl
+            hs[i, :, :] = Masked_Heights
+
+        A_m = np.ma.mean(ampls, 0)
+        A_s = np.ma.std(ampls, 0)
+        h_m = np.ma.mean(hs, 0)
+        h_s = np.ma.std(hs, 0)
+
+        return A_m, A_s, h_m, h_s

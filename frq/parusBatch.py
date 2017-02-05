@@ -6,11 +6,11 @@ import os.path as path
 import argparse
 import glob
 
-from datetime import datetime
-import sqlite3
+#from datetime import datetime
+#import sqlite3
 
 import parusFile as pf
-import parusPlot as pplt
+#import parusPlot as pplt
 
 
 def createParser():
@@ -30,22 +30,25 @@ if __name__ == '__main__':
     names = glob.glob(path.join(namespace.directory, '*.frq'))
 
     # Create a connection and cursor to your database
-    conn = sqlite3.connect('parus.sqlite')
-    cur = conn.cursor()
+    #conn = sqlite3.connect('parus.sqlite')
+    #cur = conn.cursor()
     # In sqlite3 foreign key constraints are disabled by default
     # for performance reasons. PRAGMA statement enables them.
-    cur.execute("PRAGMA foreign_keys = ON")
+    #cur.execute("PRAGMA foreign_keys = ON")
     for name in names:
         # 1. Parsing data and collect information.
         A = pf.parusFile(name)
+        A_m, A_s, h_m, h_s = A.calculate()
+
         #An = pplt.parusAmnimation(name, 4)
         #An.start()
         print(A._file.name)
+        print(A_m, A_s, h_m, h_s)
         # 1.1. Get averaged lines.
-        lines = A.getAllAveragedLines()
+        #lines = A.getAllAveragedLines()
         # 1.3. Get true reflections and thier searching intervals of heights.
-        intervals = A.getSearchingIntervals(lines)
-        print(intervals)
+        #intervals = A.getSearchingIntervals(lines)
+        #print(intervals)
         # 1.4. Get h'(t) and A(t) for all frequencies for all times and
         # all true reflections.
         # momentalHeights, momentalAmplitudes = A.getMomentalReflections(
@@ -75,4 +78,4 @@ if __name__ == '__main__':
         # conn.commit()
         print('Well done. Try next file.')
 
-    conn.close()
+    #conn.close()
