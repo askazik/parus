@@ -6,8 +6,8 @@ import os.path as path
 import argparse
 import glob
 
-#from datetime import datetime
-#import sqlite3
+from datetime import datetime
+import sqlite3
 
 import parusFile as pf
 #import parusPlot as pplt
@@ -30,52 +30,49 @@ if __name__ == '__main__':
     names = glob.glob(path.join(namespace.directory, '*.frq'))
 
     # Create a connection and cursor to your database
-    #conn = sqlite3.connect('parus.sqlite')
-    #cur = conn.cursor()
+    # if file not exist - create empty database
+    conn = sqlite3.connect('parus.sqlite')
+    cur = conn.cursor()
+    # Check of table <files> existence.
+    cur.execute(
+        "SELECT count(*) FROM sqlite_master "
+        "WHERE type='table' AND "
+        "name='files';")
+    data = cur.fetchall()
+    if not data[0][0]:
+        raise ValueError('Database is empty or corrupted.')
     # In sqlite3 foreign key constraints are disabled by default
     # for performance reasons. PRAGMA statement enables them.
-    #cur.execute("PRAGMA foreign_keys = ON")
+    cur.execute("PRAGMA foreign_keys = ON")
     for name in names:
         # 1. Parsing data and collect information.
+        print(name)
         A = pf.parusFile(name)
-        A_m, A_s, h_m, h_s = A.calculate()
+        A_m, A_s, h_m, h_s, ampls, hs = A.calculate()
 
-        #An = pplt.parusAmnimation(name, 4)
-        #An.start()
-        print(A._file.name)
-        print(A_m, A_s, h_m, h_s)
-        # 1.1. Get averaged lines.
-        #lines = A.getAllAveragedLines()
-        # 1.3. Get true reflections and thier searching intervals of heights.
-        #intervals = A.getSearchingIntervals(lines)
-        #print(intervals)
-        # 1.4. Get h'(t) and A(t) for all frequencies for all times and
-        # all true reflections.
-        # momentalHeights, momentalAmplitudes = A.getMomentalReflections(
-        #     intervals)
-        # rho, h_m, h_s, A_m, A_s = A.getParameters(
-        #     momentalHeights,
-        #     momentalAmplitudes)
-
-        # 1.5. Save results in sqlite Database.
+        # 2. Save results in sqlite Database.
         # Insert file
-        # ftime = datetime(*A.time[:6])
-        # cur.execute('insert into files '
-        #             '(filename, time, dt, dh) values (?,?,?,?)', (
-        #                 A.name,
-        #                 ftime,
-        #                 A.dt,
-        #                 A._heights[1] - A._heights[0]))
+        ftime = datetime(*A.time[:6])
+        cur.execute(
+            'insert into files '
+            '(filename, time, dt, dh) values (?,?,?,?)', (
+            A.name,
+            ftime,
+            A.dt,
+            A._heights[1] - A._heights[0]))
         # The python module puts the last row id inserted into
         # a variable on the cursor
-        #file_id = cur.lastrowid
+        file_id = cur.lastrowid
         # Insert frequencies
-        #cur.execute("""INSERT INTO frequencies VALUES(NULL, 'spot')""")
-        #frq_id = cur.lastrowid
+        cur.execute(
+        """INSERT INTO frequencies VALUES(NULL, 'spot')""")
+        frq_id = cur.lastrowid
         # Insert amplitude
-        #cur.execute("""INSERT INTO amplitudes VALUES(?, ?)""", (bobby_id, spot_id));
+        cur.execute(
+        """INSERT INTO amplitudes VALUES(?, ?)""",
+            (bobby_id, spot_id));
         # Commit
-        # conn.commit()
+        conn.commit()
         print('Well done. Try next file.')
 
-    #conn.close()
+    conn.close()

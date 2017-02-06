@@ -240,8 +240,10 @@ class parusUnit(object):
             on_border[i, :] = is_on_border
 
             idxs_filtered = np.nonzero(idxs != -9999)[0]
-            heights[i, idxs_filtered] = self._heights[idxs_filtered]
-            amplitudes[i, idxs_filtered] = arr[idxs_filtered]  # complex!!!
+            if idxs_filtered.size:
+                heights[i, idxs_filtered] = self._heights[idxs[idxs_filtered]]
+                # complex amplitude!!!
+                amplitudes[i, idxs_filtered] = arr[idxs[idxs_filtered]]
 
         self._parameters['theresholds'] = theresholds
         self._parameters['means'] = means
@@ -292,23 +294,24 @@ class parusUnit(object):
         i_ampl = np.nonzero(arr >= thereshold)[0]
         if i_ampl.size:
             for i in range(n_refs):
-                i_min = np.nonzero(
-                    self._heights[i_ampl] >= intervals[i, 0])[0]
+                i_min = i_ampl[np.nonzero(
+                    self._heights[i_ampl] >= intervals[i, 0])[0]]
                 if i_min.size:
-                    i_max = i_min[0] + np.nonzero(
-                        self._heights[i_min] <= intervals[i, 1])[0]
-                    ind = np.argmax(arr[i_max])
-                    indexes[i] = i_max[ind]
+                    i_max = i_min[np.nonzero(
+                        self._heights[i_min] <= intervals[i, 1])[0]]
+                    if i_max.size:
+                        ind = np.argmax(arr[i_max])
+                        indexes[i] = i_max[ind]
 
-                    # get quality of finding extremum
-                    if indexes[i] == i_max[0]:
-                        is_on_border[i] = 1
-                    elif indexes[i] == i_max[-1]:
-                        is_on_border[i] = 2
-                    elif i_max[-1].size == 1:
-                        is_on_border[i] = 3
-                    else:
-                        is_on_border[i] = 0
+                        # get quality of finding extremum
+                        if indexes[i] == i_max[0]:
+                            is_on_border[i] = 1
+                        elif indexes[i] == i_max[-1]:
+                            is_on_border[i] = 2
+                        elif i_max[-1].size == 1:
+                            is_on_border[i] = 3
+                        else:
+                            is_on_border[i] = 0
 
         return indexes, is_on_border
 
@@ -390,36 +393,36 @@ class parusFile(header):
     #     return result
 
     # get averaged data
-    def getAveragedLine(self, idFrq):
-        """Get averaged line array for a full time period for
-        given sounding frequency.
+    # def getAveragedLine(self, idFrq):
+    #     """Get averaged line array for a full time period for
+    #     given sounding frequency.
 
-        Keyword arguments:
-        idFrq -- frequency number.
-        """
-        x = self._mmap[:, idFrq, :]
-        # two last bytes save channel information
-        x_s = np.right_shift(x, 2)
-        # get complex amplitude
-        x_c = np.array(x_s[:, ::2], dtype=complex)
-        x_c.imag = x_s[:, 1::2]
-        # get absolute numbers
-        x_abs = np.absolute(x_c)
-        # mean by all times
-        x_avg = np.int16(np.mean(x_abs, axis=0))
+    #     Keyword arguments:
+    #     idFrq -- frequency number.
+    #     """
+    #     x = self._mmap[:, idFrq, :]
+    #     # two last bytes save channel information
+    #     x_s = np.right_shift(x, 2)
+    #     # get complex amplitude
+    #     x_c = np.array(x_s[:, ::2], dtype=complex)
+    #     x_c.imag = x_s[:, 1::2]
+    #     # get absolute numbers
+    #     x_abs = np.absolute(x_c)
+    #     # mean by all times
+    #     x_avg = np.int16(np.mean(x_abs, axis=0))
 
-        return x_avg
+    #     return x_avg
 
-    # get averaged data
-    def getAllAveragedLines(self):
-        """Get averaged lines array for all frequencies for a full
-        time period.
-        """
-        linesArray = np.zeros((self._rows//2, self._cols))
-        for i in range(self._cols):
-            linesArray[:, i] = self.getAveragedLine(i)
+    # # get averaged data
+    # def getAllAveragedLines(self):
+    #     """Get averaged lines array for all frequencies for a full
+    #     time period.
+    #     """
+    #     linesArray = np.zeros((self._rows//2, self._cols))
+    #     for i in range(self._cols):
+    #         linesArray[:, i] = self.getAveragedLine(i)
 
-        return linesArray
+    #     return linesArray
 
     # def getReflectionHeights(self, linesArray):
     #     """Get reflection heights for input lines.
@@ -452,70 +455,70 @@ class parusFile(header):
 
     #     return heights
 
-    def reflectionsFilter(self, heights_idxs):
-        """Filter only true reflections intervals
-        """
-        idxs_out = np.array([], dtype=np.int64)  # create empty output array
+    # def reflectionsFilter(self, heights_idxs):
+    #     """Filter only true reflections intervals
+    #     """
+    #     idxs_out = np.array([], dtype=np.int64)  # create empty output array
 
-        i_old = 1  # reflection number
-        i_new = i_old
-        h_min = self._first_min
-        h_max = self._first_max
-        dh = h_max - h_min
-        for idx in heights_idxs:  # check input array elements
-            h = self._heights[idx]
-            if h >= h_min and h <= h_max:
-                idxs_out = np.append(idxs_out, idx)
-            elif h > h_max and i_old == i_new:
-                i_new += 1
+    #     i_old = 1  # reflection number
+    #     i_new = i_old
+    #     h_min = self._first_min
+    #     h_max = self._first_max
+    #     dh = h_max - h_min
+    #     for idx in heights_idxs:  # check input array elements
+    #         h = self._heights[idx]
+    #         if h >= h_min and h <= h_max:
+    #             idxs_out = np.append(idxs_out, idx)
+    #         elif h > h_max and i_old == i_new:
+    #             i_new += 1
 
-            # change reflection number
-            if i_new > i_old:
-                i_old = i_new
-                h_min = i_old * self._first_min
-                h_max = h_min + dh
+    #         # change reflection number
+    #         if i_new > i_old:
+    #             i_old = i_new
+    #             h_min = i_old * self._first_min
+    #             h_max = h_min + dh
 
-        return idxs_out
+    #     return idxs_out
 
-    def getGroups(self, idxs):
-        """Get groupped by alone reflections indexes.
-        """
-        i = 0
-        igroups = np.empty(0, dtype=np.int64)
-        for element in idxs[1:]:
-            if element > idxs[i]+1:  # border
-                igroups = np.append(igroups, i+1)
-            i += 1
+    # def getGroups(self, idxs):
+    #     """Get groupped by alone reflections indexes.
+    #     """
+    #     i = 0
+    #     igroups = np.empty(0, dtype=np.int64)
+    #     for element in idxs[1:]:
+    #         if element > idxs[i]+1:  # border
+    #             igroups = np.append(igroups, i+1)
+    #         i += 1
 
-        return np.split(idxs, igroups)
+    #     return np.split(idxs, igroups)
 
-    def getSearchingIntervals(self, lines):
-        """Adjasting all reflections intervals for given approximation.
-        Output heights and height intervals is < +/- dn >.
+    # def getSearchingIntervals(self, lines):
+    #     """Adjasting all reflections intervals for given approximation.
+    #     Output heights and height intervals is < +/- dn >.
 
-        Keyword arguments:
-        lines -- lines array.
-        """
-        # get reflections heights from averaged lines
-        ave_heights = self.getReflectionHeights(lines)
+    #     Keyword arguments:
+    #     lines -- lines array.
+    #     """
+    #     # get reflections heights from averaged lines
+    #     ave_heights = self.getReflectionHeights(lines)
 
-        # search interval = +/- 7 points !!! It's simple!
-        dn = 7
-        N = 4  # max 4 reflections
-        intervals = np.zeros((self._cols, N, 3))
-        intervals.fill(np.NaN)
-        dh = dn * (self._heights[1] - self._heights[0])
+    #     # search interval = +/- 7 points !!! It's simple!
+    #     dn = 7
+    #     N = 4  # max 4 reflections
+    #     intervals = np.zeros((self._cols, N, 3))
+    #     intervals.fill(np.NaN)
+    #     dh = dn * (self._heights[1] - self._heights[0])
 
-        for i in range(self._cols):  # cycle for frequencies
-            h_reflections = ave_heights[i]
-            if not np.isnan(h_reflections) and h_reflections.size:
-                # на одной из частот могут быть отражения
-                for j in range(h_reflections.size):  # cycle for reflections
-                    intervals[i, j, 0] = h_reflections[j]
-                    intervals[i, j, 1] = intervals[i, j, 0] - dh
-                    intervals[i, j, 2] = intervals[i, j, 0] + dh
+    #     for i in range(self._cols):  # cycle for frequencies
+    #         h_reflections = ave_heights[i]
+    #         if not np.isnan(h_reflections) and h_reflections.size:
+    #             # на одной из частот могут быть отражения
+    #             for j in range(h_reflections.size):  # cycle for reflections
+    #                 intervals[i, j, 0] = h_reflections[j]
+    #                 intervals[i, j, 1] = intervals[i, j, 0] - dh
+    #                 intervals[i, j, 2] = intervals[i, j, 0] + dh
 
-        return intervals
+    #     return intervals
 
     # def getThereshold(self, arr):
     #     """Get thereshold for np.array.
@@ -538,72 +541,72 @@ class parusFile(header):
 
     #     return thereshold
 
-    def getMomentalReflections(self, intervals):
-        """Get h'(t) and A(t) for all data.
+    # def getMomentalReflections(self, intervals):
+    #     """Get h'(t) and A(t) for all data.
 
-        Keyword arguments:
-        intervals -- searching intervals for reflections.
-        """
-        # get numbers of interval borders
-        i_intervals = (np.divide(
-            intervals,
-            self._heights[1] - self._heights[0])).astype(int)
+    #     Keyword arguments:
+    #     intervals -- searching intervals for reflections.
+    #     """
+    #     # get numbers of interval borders
+    #     i_intervals = (np.divide(
+    #         intervals,
+    #         self._heights[1] - self._heights[0])).astype(int)
 
-        # allocate fixed output arrays
-        n_times = self._mmap.shape[0]
-        n_reflections = intervals.shape[1]
-        momentalHeights = np.zeros(
-            (n_times, n_reflections, self._cols))
-        momentalAmplitudes = np.zeros(
-            (n_times, n_reflections, self._cols))
+    #     # allocate fixed output arrays
+    #     n_times = self._mmap.shape[0]
+    #     n_reflections = intervals.shape[1]
+    #     momentalHeights = np.zeros(
+    #         (n_times, n_reflections, self._cols))
+    #     momentalAmplitudes = np.zeros(
+    #         (n_times, n_reflections, self._cols))
 
-        # critical for file version 0 and 2 !!!
-        h_base = (self._heights[0] /
-                      (self._heights[1]-self._heights[0])).astype(int)
-        for i in range(n_times):  # by times number
-            # lines = self._mmap[i, :, :]
-            unit = self.getUnit(i)
-            abs_unit = np.absolute(unit)
-            for j in range(n_reflections):  # by reflections
-                lims = i_intervals[:, j, -2:] - h_base
-                for k in range(self._cols):  # by frequencies
-                    cur = abs_unit[k, lims[k, 0]: lims[k, 1]]
-                    i_max = cur.argmax() + lims[k, 0]
-                    momentalAmplitudes[i, j, k] = abs_unit[k, i_max]
-                    momentalHeights[i, j, k] = self._heights[i_max]
+    #     # critical for file version 0 and 2 !!!
+    #     h_base = (self._heights[0] /
+    #                   (self._heights[1]-self._heights[0])).astype(int)
+    #     for i in range(n_times):  # by times number
+    #         # lines = self._mmap[i, :, :]
+    #         unit = self.getUnit(i)
+    #         abs_unit = np.absolute(unit)
+    #         for j in range(n_reflections):  # by reflections
+    #             lims = i_intervals[:, j, -2:] - h_base
+    #             for k in range(self._cols):  # by frequencies
+    #                 cur = abs_unit[k, lims[k, 0]: lims[k, 1]]
+    #                 i_max = cur.argmax() + lims[k, 0]
+    #                 momentalAmplitudes[i, j, k] = abs_unit[k, i_max]
+    #                 momentalHeights[i, j, k] = self._heights[i_max]
 
-        return momentalHeights, momentalAmplitudes
+    #     return momentalHeights, momentalAmplitudes
 
-    def getParameters(self, hs, As):
-        """Calculate parameters for given momental heights and amplitudes.
+    # def getParameters(self, hs, As):
+    #     """Calculate parameters for given momental heights and amplitudes.
 
-        Keyword arguments:
-        hs -- momental heights of reflections;
-        As -- momental amplitudes of reflections.
-        """
+    #     Keyword arguments:
+    #     hs -- momental heights of reflections;
+    #     As -- momental amplitudes of reflections.
+    #     """
 
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # Caluculate only for two first reflections!
-        # for night !!! rho_g ~ 1
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        N = As.shape[1]  # number of reflections
-        # Get h'(t) and An(t).
-        A_m = np.mean(As, 0)
-        A_s = np.std(As, 0)
+    #     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #     # Caluculate only for two first reflections!
+    #     # for night !!! rho_g ~ 1
+    #     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #     N = As.shape[1]  # number of reflections
+    #     # Get h'(t) and An(t).
+    #     A_m = np.mean(As, 0)
+    #     A_s = np.std(As, 0)
 
-        if N <= 1:
-            rho = np.NaN
-            h = hs  # if N == 1
-        else:
-            h = np.subtract(hs[:, 1, :], hs[:, 0, :])
-            rho = 2 * A_m[1, :] / A_m[0, :]
-        h_m = np.mean(h, 0)
-        h_s = np.std(h, 0)
+    #     if N <= 1:
+    #         rho = np.NaN
+    #         h = hs  # if N == 1
+    #     else:
+    #         h = np.subtract(hs[:, 1, :], hs[:, 0, :])
+    #         rho = 2 * A_m[1, :] / A_m[0, :]
+    #     h_m = np.mean(h, 0)
+    #     h_s = np.std(h, 0)
 
-        return rho, h_m, h_s, A_m, A_s
+    #     return rho, h_m, h_s, A_m, A_s
 
     def calculate(self):
-        """
+        """Calculate file parameters.
         """
         # allocate fixed output arrays
         n_times = self._mmap.shape[0]
@@ -621,19 +624,19 @@ class parusFile(header):
             quality = param['on_border']
             Masked_Ampl = np.ma.array(
                 param['amplitudes'],
-                mask=(quality != 0),
+                mask=(quality != 3),
                 copy=True)
             Masked_Heights = np.ma.array(
                 param['heights'],
-                mask=(quality != 0),
+                mask=(quality != 3),
                 copy=True)
 
             ampls[i, :, :] = Masked_Ampl
             hs[i, :, :] = Masked_Heights
 
-        A_m = np.ma.mean(ampls, 0)
-        A_s = np.ma.std(ampls, 0)
+        A_m = np.ma.mean(abs(ampls), 0)
+        A_s = np.ma.std(abs(ampls), 0)
         h_m = np.ma.mean(hs, 0)
         h_s = np.ma.std(hs, 0)
 
-        return A_m, A_s, h_m, h_s
+        return A_m, A_s, h_m, h_s, ampls, hs
