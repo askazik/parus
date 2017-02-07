@@ -7,6 +7,7 @@ import argparse
 import glob
 
 from datetime import datetime
+import numpy as np
 import sqlite3
 
 import parusFile as pf
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     cur.execute(
         "SELECT count(*) FROM sqlite_master "
         "WHERE type='table' AND "
-        "name='files';")
+        "name='files'")
     data = cur.fetchall()
     if not data[0][0]:
         raise ValueError('Database is empty or corrupted.')
@@ -48,31 +49,69 @@ if __name__ == '__main__':
         # 1. Parsing data and collect information.
         print(name)
         A = pf.parusFile(name)
-        A_m, A_s, h_m, h_s, ampls, hs = A.calculate()
 
         # 2. Save results in sqlite Database.
-        # Insert file
+        # Fill file table.
         ftime = datetime(*A.time[:6])
         cur.execute(
-            'insert into files '
-            '(filename, time, dt, dh) values (?,?,?,?)', (
-            A.name,
-            ftime,
-            A.dt,
-            A._heights[1] - A._heights[0]))
-        # The python module puts the last row id inserted into
-        # a variable on the cursor
-        file_id = cur.lastrowid
-        # Insert frequencies
-        cur.execute(
-        """INSERT INTO frequencies VALUES(NULL, 'spot')""")
-        frq_id = cur.lastrowid
-        # Insert amplitude
-        cur.execute(
-        """INSERT INTO amplitudes VALUES(?, ?)""",
-            (bobby_id, spot_id));
+            'SELECT id_file FROM files WHERE filename=?', (A.name,))
+        data = cur.fetchall()
+        if data:  # exist
+            file_id = data[0][0]
+        else:  # create record
+            cur.execute(
+                'insert into files '
+                '(filename, time, dt, dh) values (?,?,?,?)', (
+                A.name, ftime, A.dt, A._heights[1] - A._heights[0]))
+            file_id = cur.lastrowid
+
+        # Fill frequencies table.
+        frq_ids = []  # empty list
+        i_frq = 0
+        for frq in A.frqs:
+            cur.execute(
+                'SELECT id_frq FROM frequencies '
+                'WHERE frequency=?', (np.asscalar(frq),))
+            data = cur.fetchall()
+            if data:  # exist
+                frq_ids.append(data[0][0])
+            else:  # create record
+                cur.execute(
+                    'INSERT INTO frequencies '
+                    '(frequency) values (?)',
+                    (np.asscalar(frq),))
+                frq_ids.append(cur.lastrowid)
+            i_frq += 1
+
+        # Fill amplitude table.
+        A_m, A_s, h_m, h_s, ampls, hs, thr = A.calculate()
+        i_frq = 0
+        for frq_id in frq_ids:
+            cur.execute(
+                'SELECT id_ampl FROM amplitudes '
+                'WHERE ampl_file=? AND ampl_frq=?',
+                (file_id, frq_id))
+            data = cur.fetchall()
+            if data:  # exist
+                pass
+            else:  # create record
+                shape = A_m.shape
+                for i_ref in range(shape[1]):  # by reflection
+                    if not A_m[i_frq, i_ref]:  # is NaN
+                        break;
+                    cur.execute(
+                        'INSERT INTO amplitudes '
+                        '(ampl_file, ampl_frq, number, '
+                        'ampl_m, ampl_s, heights_m, heights_s, thereshold) '
+                        'VALUES(?,?,?,?,?,?,?,?)',
+                        (file_id, frq_id, i_ref,
+                        A_m[i_frq, i_ref], A_s[i_frq, i_ref],
+                        h_m[i_frq, i_ref], h_s[i_frq, i_ref], thr[i_frq]))
+            i_frq += 1  # next frq number
+
         # Commit
         conn.commit()
         print('Well done. Try next file.')
 
     conn.close()
+    print('End of files list.')
