@@ -74,10 +74,6 @@ class header(object):
     @property
     def frqs(self):
         return self._frqs
-
-    @property
-    def version(self):
-        return self._header['ver']
     # property END
 
     def getHeights(self):
@@ -116,7 +112,7 @@ class header(object):
 class parusIntervals(object):
     """Class for define of heights intervals."""
 
-    def __init__(self, nfrq=5, nref=4, dh=40, h1=90):
+    def __init__(self, nfrq=5, nref=4, dh=30, h1=90):
         """Init data unit.
 
         Keyword arguments:
@@ -187,117 +183,137 @@ class parusIntervals(object):
                 self._intervals[i, j, 1] = self._intervals[i, j, 0] + dh
 
 
-# class parusUnit(object):
-#     """Class for parsing of multifrequencies unit of a data file."""
+class parusUnit(object):
+    """Class for parsing of multifrequencies unit of a data file."""
 
-#     def __init__(self, unit, heights, intervals_obj):
-#         """Init data unit.
+    def __init__(self, unit, heights, intervals_obj):
+        """Init data unit.
 
-#         Keyword argument:
-#         unit -- complex array from getUnit(self, idTime), parusFile;
-#         heights -- heights array;
-#         intervals -- searching reflections only in given intervals.
-#         """
-#         super().__init__()
-#         self._unit = unit
-#         self._heights = heights
-#         self._intervals = intervals_obj.intervals
+        Keyword argument:
+        unit -- complex array from getUnit(self, idTime), parusFile;
+        heights -- heights array;
+        intervals -- searching reflections only in given intervals.
+        """
+        super().__init__()
+        self._unit = unit
+        self._heights = heights
+        self._intervals = intervals_obj.intervals
 
-#         # output
-#         seq = (
-#             'theresholds', 'means', 'medians', 'stds',
-#             'heights', 'amplitudes')
-#         self._parameters = dict.fromkeys(seq)
+        # output
+        seq = (
+            'theresholds', 'means', 'medians', 'stds',
+            'heights', 'amplitudes')
+        self._parameters = dict.fromkeys(seq)
 
-#     # property BEGIN
+    # property BEGIN
 
-#     @property
-#     def parameters(self):
-#         shape = self._intervals.shape
-#         n_frqs = shape[0]
-#         n_refs = shape[1]
+    @property
+    def parameters(self):
+        shape = self._intervals.shape
+        n_frqs = shape[0]
+        n_refs = shape[1]
 
-#         theresholds = np.empty(n_frqs)
-#         theresholds[:] = np.NaN
-#         means = np.empty(n_frqs)
-#         means[:] = np.NaN
-#         medians = np.empty(n_frqs)
-#         medians[:] = np.NaN
-#         stds = np.empty(n_frqs)
-#         stds[:] = np.NaN
-#         heights = np.empty([n_frqs, n_refs])
-#         heights[:] = np.NaN
-#         amplitudes = np.empty([n_frqs, n_refs], dtype=complex)
-#         amplitudes[:] = np.NaN
-#         on_border = np.zeros([n_frqs, n_refs], dtype=int)
-#         for i in range(n_frqs):
-#             arr = self._unit[i, :]
-#             abs_arr = np.abs(arr)
-#             theresholds[i] = self.getThereshold(abs_arr)
-#             means[i] = np.mean(abs_arr)
-#             medians[i] = np.median(abs_arr)
-#             stds[i] = np.std(abs_arr)
-#             idxs, is_on_border = self.getReflections(
-#                 abs_arr,
-#                 theresholds[i],
-#                 self._intervals[i])
-#             on_border[i, :] = is_on_border
+        theresholds = np.empty(n_frqs)
+        theresholds[:] = np.NaN
+        means = np.empty(n_frqs)
+        means[:] = np.NaN
+        medians = np.empty(n_frqs)
+        medians[:] = np.NaN
+        stds = np.empty(n_frqs)
+        stds[:] = np.NaN
+        heights = np.empty([n_frqs, n_refs])
+        heights[:] = np.NaN
+        amplitudes = np.empty([n_frqs, n_refs], dtype=complex)
+        amplitudes[:] = np.NaN
+        on_border = np.zeros([n_frqs, n_refs], dtype=int)
+        for i in range(n_frqs):
+            arr = self._unit[i, :]
+            abs_arr = np.abs(arr)
+            theresholds[i] = self.getThereshold(abs_arr)
+            means[i] = np.mean(abs_arr)
+            medians[i] = np.median(abs_arr)
+            stds[i] = np.std(abs_arr)
+            idxs, is_on_border = self.getReflections(
+                abs_arr,
+                theresholds[i],
+                self._intervals[i])
+            on_border[i, :] = is_on_border
 
-#             idxs_filtered = np.nonzero(idxs != -9999)[0]
-#             if idxs_filtered.size:
-#                 heights[i, idxs_filtered] = self._heights[idxs[idxs_filtered]]
-#                 # complex amplitude!!!
-#                 amplitudes[i, idxs_filtered] = arr[idxs[idxs_filtered]]
+            idxs_filtered = np.nonzero(idxs != -9999)[0]
+            if idxs_filtered.size:
+                heights[i, idxs_filtered] = self._heights[idxs[idxs_filtered]]
+                # complex amplitude!!!
+                amplitudes[i, idxs_filtered] = arr[idxs[idxs_filtered]]
 
-#         self._parameters['theresholds'] = theresholds
-#         self._parameters['means'] = means
-#         self._parameters['medians'] = medians
-#         self._parameters['stds'] = stds
-#         self._parameters['on_border'] = on_border
-#         self._parameters['heights'] = heights
-#         self._parameters['amplitudes'] = amplitudes
+        self._parameters['theresholds'] = theresholds
+        self._parameters['means'] = means
+        self._parameters['medians'] = medians
+        self._parameters['stds'] = stds
+        self._parameters['on_border'] = on_border
+        self._parameters['heights'] = heights
+        self._parameters['amplitudes'] = amplitudes
 
-#         return self._parameters
+        return self._parameters
 
-#     # property END
+    # property END
 
+    def getThereshold(self, arr):
+        """Get thereshold for np.array.
 
-#     def getReflections(self, arr, thereshold, intervals):
-#         """Get reflection height for input lines.
+        Keyword arguments:
+        idTime -- time number (Unit number) from begin of sounding;
+        idFrq -- frequency number.
+        """
+        # 0. Sort given np.array.
+        # Use representative array from number = 30 (60 km).
+        arrSorted = np.sort(arr[30:], axis=0, kind='mergesort')
+        # 1. Get quartiles.
+        n = arrSorted.size
+        Q1 = np.amin((arrSorted[n//4], arrSorted[n//4-1]))
+        Q3 = np.amin((arrSorted[3*n//4], arrSorted[3*n//4-1]))
+        # 2. Get interval.
+        dQ = Q3 - Q1
+        # 3. Get top border of outliers. Search minor outliers.
+        thereshold = Q3 + 1.5 * dQ
 
-#         Return indexes of reflections or NaN if no reflection.
-#         Return key is reflection on min(1)/max(2) interval limits.
-#         """
+        return thereshold
 
-#         n_refs = intervals.shape[0]
-#         indexes = np.empty(n_refs, dtype=np.int)
-#         indexes[:] = -9999  # special no-value key
-#         is_on_border = np.zeros(n_refs, dtype=np.int)  # best quality
-#         is_on_border[:] = -9999
+    def getReflections(self, arr, thereshold, intervals):
+        """Get reflection height for input lines.
 
-#         i_ampl = np.nonzero(arr >= thereshold)[0]
-#         if i_ampl.size:
-#             for i in range(n_refs):
-#                 i_min = i_ampl[np.nonzero(
-#                     self._heights[i_ampl] >= intervals[i, 0])[0]]
-#                 if i_min.size:
-#                     i_max = i_min[np.nonzero(
-#                         self._heights[i_min] <= intervals[i, 1])[0]]
-#                     if i_max.size:
-#                         ind = np.argmax(arr[i_max])
-#                         indexes[i] = i_max[ind]
+        Return indexes of reflections or NaN if no reflection.
+        Return key is reflection on min(1)/max(2) interval limits.
+        """
 
-#                         # get quality of finding extremum
-#                         if indexes[i] == i_max[0]:
-#                             is_on_border[i] = 1
-#                         elif indexes[i] == i_max[-1]:
-#                             is_on_border[i] = 2
-#                         elif i_max[-1].size == 1:
-#                             is_on_border[i] = 3
-#                         else:
-#                             is_on_border[i] = 0
+        n_refs = intervals.shape[0]
+        indexes = np.empty(n_refs, dtype=np.int)
+        indexes[:] = -9999  # special no-value key
+        is_on_border = np.zeros(n_refs, dtype=np.int)  # best quality
+        is_on_border[:] = -9999
 
-#         return indexes, is_on_border
+        i_ampl = np.nonzero(arr >= thereshold)[0]
+        if i_ampl.size:
+            for i in range(n_refs):
+                i_min = i_ampl[np.nonzero(
+                    self._heights[i_ampl] >= intervals[i, 0])[0]]
+                if i_min.size:
+                    i_max = i_min[np.nonzero(
+                        self._heights[i_min] <= intervals[i, 1])[0]]
+                    if i_max.size:
+                        ind = np.argmax(arr[i_max])
+                        indexes[i] = i_max[ind]
+
+                        # get quality of finding extremum
+                        if indexes[i] == i_max[0]:
+                            is_on_border[i] = 1
+                        elif indexes[i] == i_max[-1]:
+                            is_on_border[i] = 2
+                        elif i_max[-1].size == 1:
+                            is_on_border[i] = 3
+                        else:
+                            is_on_border[i] = 0
+
+        return indexes, is_on_border
 
 
 class parusFile(header):
@@ -335,11 +351,10 @@ class parusFile(header):
         self._intervals = parusIntervals()
 
     # property BEGIN
-    @property
     def intervals(self):
-        return self._intervals.intervals
+        _intervals = self._intervals.intervals
+        return _intervals
 
-    @property
     def heights(self):
         return self._heights
 
@@ -357,125 +372,69 @@ class parusFile(header):
         # get complex amplitude
         result = np.array(raw_shifted[:, ::2], dtype=complex)
         result.imag = raw_shifted[:, 1::2]
+        unit = parusUnit(result, self._heights, self._intervals)
 
-        return np.abs(result)
+        return unit
 
-    def getAveragedMeans(self):
-        """Calculate averaged means for all frequencies.
+    def calculate(self):
+        """Calculate file parameters.
         """
+        # allocate fixed output arrays
         n_times = self._mmap.shape[0]
-        ave = self.getUnit(0)  # initialize
-        for i in range(1, n_times):  # by times number
-            ave = (ave + self.getUnit(i))/2
-
-        return ave
-
-    def getSigma(self, ave_means):
-        """Calculate sigma for all heights and frequencies.
-        """
-        n_times = self._mmap.shape[0]
-        tmp = np.zeros(ave_means.shape)
+        shape = self._intervals.intervals.shape
+        n_frqs = shape[0]
+        n_refs = shape[1]
+        ampls = np.ma.empty([n_times, n_frqs, n_refs])
+        hs = np.ma.empty([n_times, n_frqs, n_refs])
+        Ths = np.ma.empty([n_times, n_frqs])
         for i in range(n_times):  # by times number
-            arr = self.getUnit(i)
-            tmp += (arr - ave_means)**2
-        sigma = np.sqrt(tmp/(n_times - 1))
+            iUnit = self.getUnit(i)
+            param = iUnit.parameters
 
-        return sigma
+            # use masked array for get true data
+            # http://koldunov.net/?p=356
+            quality = param['on_border']
+            Masked_Ampl = np.ma.array(
+                np.abs(param['amplitudes']),
+                mask=(quality != 3),
+                copy=True)
+            Masked_Heights = np.ma.array(
+                param['heights'],
+                mask=(quality != 3),
+                copy=True)
 
-    def getThereshold(self, arr):
-        """Get thereshold for array.
-        """
-        # 0. Sort given np.array.
-        arrSorted = np.sort(arr, axis=0, kind='mergesort')
-        # 1. Get quartiles.
-        n = arrSorted.size
-        Q1 = np.amin((arrSorted[n//4], arrSorted[n//4-1]))
-        Q3 = np.amin((arrSorted[3*n//4], arrSorted[3*n//4-1]))
-        # 2. Get interval.
-        dQ = Q3 - Q1
-        # 3. Get top border of outliers. Search minor outliers.
-        thereshold = Q3 + 1.5 * dQ
+            withNaN = param['amplitudes']
+            Masked_Theresholds = np.ma.array(
+                param['theresholds'],
+                mask=np.isnan(withNaN[:, 0]),
+                copy=True)
 
-        return thereshold
+            ampls[i, :, :] = Masked_Ampl
+            hs[i, :, :] = Masked_Heights
+            Ths[i, :] = Masked_Theresholds
 
-    def getTheresholds(self, full_arr):
-        """Get theresholds for fullarray.
-        """
-        theresholds = np.empty(self._cols)
-        for i in range(self._cols):
-            theresholds[i] = self.getThereshold(full_arr[i, :])
+        A_m = np.ma.mean(abs(ampls), 0)
+        A_s = np.ma.std(abs(ampls), 0)
+        h_m = np.ma.mean(hs, 0)
+        h_s = np.ma.std(hs, 0)
+        Ths_m = np.ma.mean(Ths, 0)
 
-        return theresholds
-
-    def getDummyReflectionIndex(self, i_frq, arr, thereshold):
-        """Get reflection height for input line.
-
-        Return indexes of reflections or NaN if no reflection.
-        """
-        intervals = self.intervals[i_frq]
-        n_refs = intervals.shape[1]
-        indexes = np.empty(n_refs, dtype=np.int)
-        indexes[:] = -9999  # special no-value key
-
-        i_ampl = np.nonzero(arr >= thereshold)[0]
-        if i_ampl.size:
-            for i in range(n_refs):
-                i_min = i_ampl[np.nonzero(
-                    self._heights[i_ampl] >= intervals[i_frq, i, 0])[0]]
-                if i_min.size:
-                    i_max = i_min[np.nonzero(
-                        self._heights[i_min] <= intervals[i_frq, i, 1])[0]]
-                    if i_max.size:
-                        ind = np.argmax(arr[i_max])
-                        indexes[i] = i_max[ind]
-
-        return indexes
-
-    def getDummyReflections(self, full_arr, thr):
-        """Get reflections parameters for full array.
-        """
-        n_refs = self.intervals.shape[1]
-
-        cur_shape = [self._cols, n_refs]
-        Am = np.empty(cur_shape)
-        Am[:] = np.NaN
-        As = np.empty(cur_shape)
-        As[:] = np.NaN
-        height = np.empty(cur_shape)
-        height[:] = np.NaN
-        for i in range(self._cols):
-            arr = full_arr[i, :]
-            idxs = self.getDummyReflectionIndex(i, arr, thr[i])
-            for j in range(n_refs):
-                if idxs[j] != -9999:
-                    height[i, :] = self._heights[idxs[j]]
-                    Am[i, :] = full_arr[i, idxs[j]]
-                    As[i, :] = np.std(self._mmap[:, i, j])
-                else:  # stop for first NaN
-                    break
-
-        return Am, As, height
+        return A_m, A_s, h_m, h_s, ampls, hs, Ths_m
 
     def dummy(self):
         """Dummy calculate file parameters.
         """
+        n_times = self._mmap.shape[0]
+        n_frqs = self._cols
+        ave_un = self.getUnit(0)  # initialize
+        ave_ampl = ave_un._unit
+        for i in range(1, n_times):  # by times number
+            ave_un = self.getUnit(i)
+            ave_ampl = (ave_ampl + ave_un._unit)/2
 
-        # Output formatting.
-        keys = [
-            'A_mean', 'A_sigma', 'A_ampl', 'thereshold',
-            'h_mean', 'n_sigma', 'n_mean']
-        results = dict.fromkeys(keys)
+        theresholds = np.empty(n_frqs)
+        for i in range(n_frqs):
+            theresholds[i] = ave_un.getThereshold(ave_ampl)
 
-        results['A_ampl'] = self.getAveragedMeans()
-        sigma = self.getSigma(results['A_ampl'])
-        results['n_sigma'] = np.median(sigma, axis=1)
-        results['thereshold'] = self.getTheresholds(results['A_ampl'])
+        return  A_m, A_s, h_m, h_s, thr, n_sigma
 
-        Am, As, height = self.getDummyReflections(
-            results['A_ampl'], results['thereshold'])
-
-        results['A_mean'] = Am
-        results['A_sigma'] = As
-        results['h_mean'] = height
-
-        return  results

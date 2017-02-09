@@ -23,6 +23,31 @@ def createParser():
     return parser
 
 
+# Print iterations progress
+def printProgressBar(
+        iteration, total, prefix='', suffix='', decimals=1,
+        length=100, fill='#'):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+    """
+    percent = (
+        "{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
+    # Print New Line on Complete
+    if iteration == total:
+        print()
+
+
 # Проверочная программа
 if __name__ == '__main__':
     # 0. Get working parameters.
@@ -42,12 +67,19 @@ if __name__ == '__main__':
     data = cur.fetchall()
     if not data[0][0]:
         raise ValueError('Database is empty or corrupted.')
+
     # In sqlite3 foreign key constraints are disabled by default
     # for performance reasons. PRAGMA statement enables them.
     cur.execute("PRAGMA foreign_keys = ON")
+
+    i_file = 0
+    n_files = len(names)
+    # Initial call to print 0% progress
+    printProgressBar(
+        i_file, n_files,
+        prefix='Progress:', suffix='Complete', length=50)
     for name in names:
         # 1. Parsing data and collect information.
-        print(name)
         A = pf.parusFile(name)
 
         # 2. Save results in sqlite Database.
@@ -61,8 +93,8 @@ if __name__ == '__main__':
         else:  # create record
             cur.execute(
                 'insert into files '
-                '(filename, time, dt, dh) values (?,?,?,?)', (
-                A.name, ftime, A.dt, A._heights[1] - A._heights[0]))
+                '(filename, time, dt, dh) values (?,?,?,?)',
+                (A.name, ftime, A.dt, A._heights[1] - A._heights[0]))
             file_id = cur.lastrowid
 
         # Fill frequencies table.
@@ -84,7 +116,7 @@ if __name__ == '__main__':
             i_frq += 1
 
         # Fill amplitude table.
-        A_m, A_s, h_m, h_s, ampls, hs, thr = A.calculate()
+        results = A.dummy()
         i_frq = 0
         for frq_id in frq_ids:
             cur.execute(
@@ -95,23 +127,30 @@ if __name__ == '__main__':
             if data:  # exist
                 pass
             else:  # create record
-                shape = A_m.shape
+                shape = results['A_mean'].shape
                 for i_ref in range(shape[1]):  # by reflection
-                    if not A_m[i_frq, i_ref]:  # is NaN
-                        break;
+                    if np.isnan(results['A_mean'][i_frq, i_ref]):
+                        break
                     cur.execute(
                         'INSERT INTO amplitudes '
                         '(ampl_file, ampl_frq, number, '
-                        'ampl_m, ampl_s, heights_m, heights_s, thereshold) '
-                        'VALUES(?,?,?,?,?,?,?,?)',
+                        'ampl_m, ampl_s, height, '
+                        'n_sigma, thereshold) '
+                        'VALUES(?,?,?,?,?,?,?,?,?)',
                         (file_id, frq_id, i_ref,
-                        A_m[i_frq, i_ref], A_s[i_frq, i_ref],
-                        h_m[i_frq, i_ref], h_s[i_frq, i_ref], thr[i_frq]))
+                        results['A_mean'][i_frq, i_ref],
+                        results['A_sigma'][i_frq, i_ref],
+                        results['h_mean'][i_frq, i_ref],
+                        results['n_sigma'][i_frq],
+                        results['thereshold'][i_frq]))
             i_frq += 1  # next frq number
 
         # Commit
         conn.commit()
-        print('Well done. Try next file.')
+        # Update Progress Bar
+        i_file += 1
+        printProgressBar(
+            i_file, n_files,
+            prefix='Progress:', suffix='Complete', length=50)
 
     conn.close()
-    print('End of files list.')
