@@ -116,7 +116,7 @@ class header(object):
 class parusIntervals(object):
     """Class for define of heights intervals."""
 
-    def __init__(self, nfrq=5, nref=4, dh=40, h1=90):
+    def __init__(self, nfrq=5, nref=4, dh=40, h1=80):
         """Init data unit.
 
         Keyword arguments:
@@ -185,119 +185,6 @@ class parusIntervals(object):
             for j in range(shape[1]):
                 self._intervals[i, j, 0] = h1 * (j + 1)
                 self._intervals[i, j, 1] = self._intervals[i, j, 0] + dh
-
-
-# class parusUnit(object):
-#     """Class for parsing of multifrequencies unit of a data file."""
-
-#     def __init__(self, unit, heights, intervals_obj):
-#         """Init data unit.
-
-#         Keyword argument:
-#         unit -- complex array from getUnit(self, idTime), parusFile;
-#         heights -- heights array;
-#         intervals -- searching reflections only in given intervals.
-#         """
-#         super().__init__()
-#         self._unit = unit
-#         self._heights = heights
-#         self._intervals = intervals_obj.intervals
-
-#         # output
-#         seq = (
-#             'theresholds', 'means', 'medians', 'stds',
-#             'heights', 'amplitudes')
-#         self._parameters = dict.fromkeys(seq)
-
-#     # property BEGIN
-
-#     @property
-#     def parameters(self):
-#         shape = self._intervals.shape
-#         n_frqs = shape[0]
-#         n_refs = shape[1]
-
-#         theresholds = np.empty(n_frqs)
-#         theresholds[:] = np.NaN
-#         means = np.empty(n_frqs)
-#         means[:] = np.NaN
-#         medians = np.empty(n_frqs)
-#         medians[:] = np.NaN
-#         stds = np.empty(n_frqs)
-#         stds[:] = np.NaN
-#         heights = np.empty([n_frqs, n_refs])
-#         heights[:] = np.NaN
-#         amplitudes = np.empty([n_frqs, n_refs], dtype=complex)
-#         amplitudes[:] = np.NaN
-#         on_border = np.zeros([n_frqs, n_refs], dtype=int)
-#         for i in range(n_frqs):
-#             arr = self._unit[i, :]
-#             abs_arr = np.abs(arr)
-#             theresholds[i] = self.getThereshold(abs_arr)
-#             means[i] = np.mean(abs_arr)
-#             medians[i] = np.median(abs_arr)
-#             stds[i] = np.std(abs_arr)
-#             idxs, is_on_border = self.getReflections(
-#                 abs_arr,
-#                 theresholds[i],
-#                 self._intervals[i])
-#             on_border[i, :] = is_on_border
-
-#             idxs_filtered = np.nonzero(idxs != -9999)[0]
-#             if idxs_filtered.size:
-#                 heights[i, idxs_filtered] = self._heights[idxs[idxs_filtered]]
-#                 # complex amplitude!!!
-#                 amplitudes[i, idxs_filtered] = arr[idxs[idxs_filtered]]
-
-#         self._parameters['theresholds'] = theresholds
-#         self._parameters['means'] = means
-#         self._parameters['medians'] = medians
-#         self._parameters['stds'] = stds
-#         self._parameters['on_border'] = on_border
-#         self._parameters['heights'] = heights
-#         self._parameters['amplitudes'] = amplitudes
-
-#         return self._parameters
-
-#     # property END
-
-
-#     def getReflections(self, arr, thereshold, intervals):
-#         """Get reflection height for input lines.
-
-#         Return indexes of reflections or NaN if no reflection.
-#         Return key is reflection on min(1)/max(2) interval limits.
-#         """
-
-#         n_refs = intervals.shape[0]
-#         indexes = np.empty(n_refs, dtype=np.int)
-#         indexes[:] = -9999  # special no-value key
-#         is_on_border = np.zeros(n_refs, dtype=np.int)  # best quality
-#         is_on_border[:] = -9999
-
-#         i_ampl = np.nonzero(arr >= thereshold)[0]
-#         if i_ampl.size:
-#             for i in range(n_refs):
-#                 i_min = i_ampl[np.nonzero(
-#                     self._heights[i_ampl] >= intervals[i, 0])[0]]
-#                 if i_min.size:
-#                     i_max = i_min[np.nonzero(
-#                         self._heights[i_min] <= intervals[i, 1])[0]]
-#                     if i_max.size:
-#                         ind = np.argmax(arr[i_max])
-#                         indexes[i] = i_max[ind]
-
-#                         # get quality of finding extremum
-#                         if indexes[i] == i_max[0]:
-#                             is_on_border[i] = 1
-#                         elif indexes[i] == i_max[-1]:
-#                             is_on_border[i] = 2
-#                         elif i_max[-1].size == 1:
-#                             is_on_border[i] = 3
-#                         else:
-#                             is_on_border[i] = 0
-
-#         return indexes, is_on_border
 
 
 class parusFile(header):
@@ -407,13 +294,13 @@ class parusFile(header):
 
         return theresholds
 
-    def getDummyReflectionIndex(self, i_frq, arr, thereshold):
+    def getReflectionIndex(self, i_frq, arr, thereshold):
         """Get reflection height for input line.
 
         Return indexes of reflections or NaN if no reflection.
         """
         intervals = self.intervals[i_frq]
-        n_refs = intervals.shape[1]
+        n_refs = intervals.shape[0]
         indexes = np.empty(n_refs, dtype=np.int)
         indexes[:] = -9999  # special no-value key
 
@@ -421,17 +308,21 @@ class parusFile(header):
         if i_ampl.size:
             for i in range(n_refs):
                 i_min = i_ampl[np.nonzero(
-                    self._heights[i_ampl] >= intervals[i_frq, i, 0])[0]]
+                    self._heights[i_ampl] >= intervals[i, 0])[0]]
                 if i_min.size:
                     i_max = i_min[np.nonzero(
-                        self._heights[i_min] <= intervals[i_frq, i, 1])[0]]
+                        self._heights[i_min] <= intervals[i, 1])[0]]
                     if i_max.size:
                         ind = np.argmax(arr[i_max])
                         indexes[i] = i_max[ind]
+                    else:
+                        break
+                else:
+                    break
 
         return indexes
 
-    def getDummyReflections(self, full_arr, thr):
+    def getSimpleReflections(self, full_arr, thr, sigma):
         """Get reflections parameters for full array.
         """
         n_refs = self.intervals.shape[1]
@@ -445,18 +336,18 @@ class parusFile(header):
         height[:] = np.NaN
         for i in range(self._cols):
             arr = full_arr[i, :]
-            idxs = self.getDummyReflectionIndex(i, arr, thr[i])
+            idxs = self.getReflectionIndex(i, arr, thr[i])
             for j in range(n_refs):
                 if idxs[j] != -9999:
-                    height[i, :] = self._heights[idxs[j]]
-                    Am[i, :] = full_arr[i, idxs[j]]
-                    As[i, :] = np.std(self._mmap[:, i, j])
+                    height[i, j] = self._heights[idxs[j]]
+                    Am[i, j] = full_arr[i, idxs[j]]
+                    As[i, j] = sigma[i, idxs[j]]
                 else:  # stop for first NaN
                     break
 
         return Am, As, height
 
-    def dummy(self):
+    def SimpleCalculation(self):
         """Dummy calculate file parameters.
         """
 
@@ -471,8 +362,8 @@ class parusFile(header):
         results['n_sigma'] = np.median(sigma, axis=1)
         results['thereshold'] = self.getTheresholds(results['A_ampl'])
 
-        Am, As, height = self.getDummyReflections(
-            results['A_ampl'], results['thereshold'])
+        Am, As, height = self.getSimpleReflections(
+            results['A_ampl'], results['thereshold'], sigma)
 
         results['A_mean'] = Am
         results['A_sigma'] = As

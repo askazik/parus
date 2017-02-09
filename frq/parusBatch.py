@@ -116,7 +116,7 @@ if __name__ == '__main__':
             i_frq += 1
 
         # Fill amplitude table.
-        results = A.dummy()
+        results = A.SimpleCalculation()
         i_frq = 0
         for frq_id in frq_ids:
             cur.execute(
@@ -136,7 +136,7 @@ if __name__ == '__main__':
                         '(ampl_file, ampl_frq, number, '
                         'ampl_m, ampl_s, height, '
                         'n_sigma, thereshold) '
-                        'VALUES(?,?,?,?,?,?,?,?,?)',
+                        'VALUES(?,?,?,?,?,?,?,?)',
                         (file_id, frq_id, i_ref,
                         results['A_mean'][i_frq, i_ref],
                         results['A_sigma'][i_frq, i_ref],
