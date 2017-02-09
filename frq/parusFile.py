@@ -116,7 +116,7 @@ class header(object):
 class parusIntervals(object):
     """Class for define of heights intervals."""
 
-    def __init__(self, nfrq=5, nref=4, dh=40, h1=80):
+    def __init__(self, nfrq=5, nref=4, dh=30, h1=85):
         """Init data unit.
 
         Keyword arguments:
