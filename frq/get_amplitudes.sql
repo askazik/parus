@@ -31,6 +31,39 @@ amplitudes
 WHERE 
 amplitudes.number == 1
 
+-- Подсчёт B для выборок с одним отражением.
+SELECT DISTINCT 
+amplitudes.ampl_file AS i_file,
+amplitudes.ampl_frq AS i_frq,
+frequencies.frequency AS Frq,
+files.time AS Datetime,
+amplitudes.height AS Height,
+amplitudes.ampl_m AS Ampl, 
+amplitudes.ampl_s AS A_s,
+1/(amplitudes.ampl_m * amplitudes.height) AS B1,
+1/((amplitudes.ampl_m-amplitudes.n_sigma) * amplitudes.height) AS B2
+FROM 
+files, amplitudes, frequencies
+WHERE 
+amplitudes.ampl_file = files.id_file
+AND amplitudes.ampl_frq = frequencies.id_frq
+AND amplitudes.number == 0
+AND (TIME(files.time) >= '18:00:00' OR TIME(files.time) < '07:00:00')
+
+-- Подсчёт B для выборок с одним отражением и их группировка.
+SELECT DISTINCT 
+frequencies.frequency AS Frq,
+AVG(1/(amplitudes.ampl_m * amplitudes.height)) AS B1,
+AVG(1/((amplitudes.ampl_m-amplitudes.n_sigma) * amplitudes.height)) AS B2
+FROM 
+files, amplitudes, frequencies
+WHERE 
+amplitudes.ampl_file = files.id_file
+AND amplitudes.ampl_frq = frequencies.id_frq
+AND amplitudes.number == 0
+AND (TIME(files.time) >= '18:00:00' OR TIME(files.time) < '07:00:00')
+GROUP BY Frq
+
 -- Выборки с посчитанными B
 SELECT 
 id_ampl, filename, time, frequency, B_with_noise, B_without_noise
