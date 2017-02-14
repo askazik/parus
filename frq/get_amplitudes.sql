@@ -74,3 +74,57 @@ files.id_file == amplitudes.ampl_file
 AND frequencies.id_frq = amplitudes.ampl_frq
 AND B_with_noise  <> 0
 -- AND (TIME(time) >= '18:00:00' OR TIME(time) < '07:00:00')
+
+-- Выбор частот для которых существуют расчётные постоянные аппаратуры.
+-- Расчёт средних по выборке постоянных аппаратуры.
+SELECT 
+ampl_frq, 
+AVG(B_with_noise) "Average B1", AVG(B_without_noise) "Average B2",
+COUNT(*) AS Count
+FROM amplitudes, files
+WHERE 
+amplitudes.ampl_file = files.id_file
+AND B_with_noise  <> 0
+AND (TIME(time) >= '18:00:00' OR TIME(time) < '07:00:00')
+GROUP BY ampl_frq
+
+-- Расчёт ро
+SELECT 
+amplitudes.ampl_file, amplitudes.ampl_frq, 
+amplitudes.ampl_m, amplitudes.ampl_s, amplitudes.n_sigma, amplitudes.height,
+avg_b1, avg_b2, Count,
+avg_B1 * ampl_m * amplitudes.height AS rho1,
+avg_B2 * ampl_m * amplitudes.height AS rho2
+FROM
+amplitudes,
+(
+SELECT 
+ampl_frq, 
+AVG(B_with_noise) AS avg_b1 , AVG(B_without_noise) AS avg_B2,
+COUNT(*) AS Count
+FROM amplitudes, files
+WHERE 
+amplitudes.ampl_file = files.id_file
+AND B_with_noise  <> 0
+AND (TIME(time) >= '18:00:00' OR TIME(time) < '07:00:00')
+GROUP BY ampl_frq
+) subquery1
+WHERE
+amplitudes.ampl_frq = subquery1.ampl_frq
+AND amplitudes.number == 0
+AND Count > 10
+AND n_sigma > 0
+ORDER BY rho1
+
+-- L B H
+SELECT
+time, frequency, ampl_m, ampl_s, n_sigma, L, amplitudes.B, H
+FROM 
+amplitudes, files, frequencies
+WHERE 
+amplitudes.ampl_file = files.id_file
+AND amplitudes.ampl_frq = frequencies.id_frq
+--AND (TIME(files.time) BETWEEN '00:00:00' AND '08:00:00' OR TIME(files.time) BETWEEN '18:00:00' AND '23:59:59')
+AND H > 80 AND L > 0 AND ampl_s > n_sigma
+ORDER BY
+frequency

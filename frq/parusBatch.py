@@ -131,6 +131,8 @@ if __name__ == '__main__':
                 for i_ref in range(shape[1]):  # by reflection
                     if np.isnan(results['A_mean'][i_frq, i_ref]):
                         break
+                    if results['A_sigma'][i_frq, i_ref] == 0:
+                        break
                     cur.execute(
                         'INSERT INTO amplitudes '
                         '(ampl_file, ampl_frq, number, '
