@@ -245,15 +245,15 @@ class parusFile(header):
         result = np.array(raw_shifted[:, ::2], dtype=complex)
         result.imag = raw_shifted[:, 1::2]
 
-        return np.abs(result)
+        return np.abs(result), result
 
     def getAveragedMeans(self):
         """Calculate averaged means for all frequencies.
         """
         n_times = self._mmap.shape[0]
-        ave = self.getUnit(0)  # initialize
+        ave = self.getUnit(0)[0]  # initialize
         for i in range(1, n_times):  # by times number
-            ave = (ave + self.getUnit(i))/2
+            ave = (ave + self.getUnit(i)[0])/2
 
         return ave
 
@@ -263,7 +263,7 @@ class parusFile(header):
         n_times = self._mmap.shape[0]
         tmp = np.zeros(ave_means.shape)
         for i in range(n_times):  # by times number
-            arr = self.getUnit(i)
+            arr = self.getUnit(i)[0]
             tmp += (arr - ave_means)**2
         sigma = np.sqrt(tmp/(n_times - 1))
 
@@ -369,4 +369,26 @@ class parusFile(header):
         results['A_sigma'] = As
         results['h_mean'] = height
 
+        # Тестовая вставка
+        r = HardCalculation()
+
         return  results
+
+    def HardCalculation(self):
+        """True calculation file parameters.
+        """
+        n_times = self._mmap.shape[0]
+        tmp = np.zeros(ave_means.shape)
+        for i in range(n_times):  # by times number
+            arr_abs = self.getUnit(i)[0]
+            arr_complex = self.getUnit(i)[1]
+            theresholds = getTheresholds(arr_abs)
+
+            for j in range(self._cols):  # by frequencies
+                a = arr_abs[j, :]
+                b = arr_complex[j, :]
+                idxs = self.getReflectionIndex(j, a, thr[j])
+
+
+
+        return results

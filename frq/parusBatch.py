@@ -19,6 +19,9 @@ def createParser():
     parser.add_argument(
         '-d', '--directory',
         default='d:\!data\E')
+    parser.add_argument(
+        '-f', '--file',
+        default='parus.sqlite')
 
     return parser
 
@@ -57,7 +60,7 @@ if __name__ == '__main__':
 
     # Create a connection and cursor to your database
     # if file not exist - create empty database
-    conn = sqlite3.connect('parus.sqlite')
+    conn = sqlite3.connect(namespace.file)
     cur = conn.cursor()
     # Check of table <files> existence.
     cur.execute(
