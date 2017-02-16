@@ -18,7 +18,7 @@ def createParser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-d', '--directory',
-        default='d:\!data\E')
+        default='c:\\!data\\e\\new_antenn')
     parser.add_argument(
         '-f', '--file',
         default='parus.sqlite')

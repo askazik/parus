@@ -370,7 +370,7 @@ class parusFile(header):
         results['h_mean'] = height
 
         # Тестовая вставка
-        r = HardCalculation()
+        r = self.HardCalculation()
 
         return  results
 
@@ -378,17 +378,53 @@ class parusFile(header):
         """True calculation file parameters.
         """
         n_times = self._mmap.shape[0]
-        tmp = np.zeros(ave_means.shape)
+        n_refs = self.intervals.shape[1]
+
+        # Get real reflections indexes
+        idxs = np.empty([n_times, self._cols, n_refs], dtype=np.int)
+        idxs[:] = -9999
         for i in range(n_times):  # by times number
-            arr_abs = self.getUnit(i)[0]
-            arr_complex = self.getUnit(i)[1]
-            theresholds = getTheresholds(arr_abs)
+            arr_abs, arr_c = self.getUnit(i)
+            thr = self.getTheresholds(arr_abs)
 
             for j in range(self._cols):  # by frequencies
                 a = arr_abs[j, :]
-                b = arr_complex[j, :]
-                idxs = self.getReflectionIndex(j, a, thr[j])
+                idxs[i, j, :] = self.applyIntervalsAndTheresholds(
+                    self.intervals[j], thr[j], a)
 
+        # Get parameters for all frequencies
+        for i in range(self._cols):  # by frequencies
+            for j in range(n_refs):  # by reflections
+                i_times = np.extract(idxs[:, i, j] > 0, idxs[:, i, j])
+                heights = self._heights[i_times]
+                arr = arr_complex[i_times, i]
 
 
         return results
+
+    def applyIntervalsAndTheresholds(self, intervals, thereshold, arr):
+        """Get reflection height for input line.
+
+        Return indexes of reflections or NaN if no reflection.
+        """
+        n_refs = intervals.shape[0]
+        indexes = np.empty(n_refs, dtype=np.int)
+        indexes[:] = -9999  # special no-value key
+
+        i_ampl = np.nonzero(arr >= thereshold)[0]
+        if i_ampl.size:
+            for i in range(n_refs):
+                i_min = i_ampl[np.nonzero(
+                    self._heights[i_ampl] >= intervals[i, 0])[0]]
+                if i_min.size:
+                    i_max = i_min[np.nonzero(
+                        self._heights[i_min] <= intervals[i, 1])[0]]
+                    if i_max.size:
+                        ind = np.argmax(arr[i_max])
+                        indexes[i] = i_max[ind]
+                    else:
+                        break
+                else:
+                    break
+
+        return indexes
