@@ -119,7 +119,7 @@ if __name__ == '__main__':
             i_frq += 1
 
         # Fill amplitude table.
-        results = A.SimpleCalculation()
+        results = A.HardCalculation()
         i_frq = 0
         for frq_id in frq_ids:
             cur.execute(
@@ -130,24 +130,23 @@ if __name__ == '__main__':
             if data:  # exist
                 pass
             else:  # create record
-                shape = results['A_mean'].shape
+                shape = results['A_eff'].shape
                 for i_ref in range(shape[1]):  # by reflection
-                    if np.isnan(results['A_mean'][i_frq, i_ref]):
+                    if np.isnan(results['A_eff'][i_frq, i_ref]):
                         break
-                    if results['A_sigma'][i_frq, i_ref] == 0:
+                    if results['A_std'][i_frq, i_ref] == 0:
                         break
                     cur.execute(
                         'INSERT INTO amplitudes '
                         '(ampl_file, ampl_frq, number, '
-                        'ampl_m, ampl_s, height, '
-                        'n_sigma, thereshold) '
+                        'a_eff, a_std, n_std, h_eff, h_std ) '
                         'VALUES(?,?,?,?,?,?,?,?)',
                         (file_id, frq_id, i_ref,
-                        results['A_mean'][i_frq, i_ref],
-                        results['A_sigma'][i_frq, i_ref],
-                        results['h_mean'][i_frq, i_ref],
-                        results['n_sigma'][i_frq],
-                        results['thereshold'][i_frq]))
+                        results['A_eff'][i_frq, i_ref],
+                        results['A_std'][i_frq, i_ref],
+                        results['n_std'][i_frq, i_ref],
+                        results['h_eff'][i_frq, i_ref],
+                        results['h_std'][i_frq, i_ref]))
             i_frq += 1  # next frq number
 
         # Commit

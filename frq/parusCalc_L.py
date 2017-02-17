@@ -21,22 +21,22 @@ if __name__ == '__main__':
         "SELECT ampl_file, ampl_frq "
         "FROM amplitudes "
         "WHERE "
-        "amplitudes.number == 1 AND amplitudes.n_sigma > 0")
+        "amplitudes.number == 1 AND amplitudes.a_eff <> 0")
     data = cur.fetchall()
     if not data[0][0]:
         raise ValueError('Database is empty or corrupted.')
 
     for item in data:  # cycle for file and frequency paar
         cur.execute(
-            "SELECT ampl_m, n_sigma, ampl_s, height "
+            "SELECT a_eff, h_eff "
             "FROM amplitudes WHERE "
             "ampl_file == ? AND ampl_frq == ?",
             (item[0], item[1]))
         tmp = cur.fetchall()
 
-        A1 = math.sqrt(tmp[0][2]**2 + tmp[0][0]**2 - tmp[0][1]**2)
-        A2 = math.sqrt(tmp[1][2]**2 + tmp[1][0]**2 - tmp[1][1]**2)
-        H = tmp[1][3] - tmp[0][3]
+        A1 = tmp[0][0]
+        A2 = tmp[1][0]
+        H = tmp[1][1] - tmp[0][1]
         B = 2 * A2 / (H * A1**2)
         L = 20 * math.log10(2 * A2 / A1)
 

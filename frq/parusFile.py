@@ -347,57 +347,49 @@ class parusFile(header):
 
         return Am, As, height
 
-    def SimpleCalculation(self):
-        """Dummy calculate file parameters.
-        """
-
-        # Output formatting.
-        keys = [
-            'A_mean', 'A_sigma', 'A_ampl', 'thereshold',
-            'h_mean', 'n_sigma', 'n_mean']
-        results = dict.fromkeys(keys)
-
-        results['A_ampl'] = self.getAveragedMeans()
-        sigma = self.getSigma(results['A_ampl'])
-        results['n_sigma'] = np.median(sigma, axis=1)
-        results['thereshold'] = self.getTheresholds(results['A_ampl'])
-
-        Am, As, height = self.getSimpleReflections(
-            results['A_ampl'], results['thereshold'], sigma)
-
-        results['A_mean'] = Am
-        results['A_sigma'] = As
-        results['h_mean'] = height
-
-        # Тестовая вставка
-        r = self.HardCalculation()
-
-        return  results
-
     def HardCalculation(self):
         """True calculation file parameters.
         """
+        # Output formatting
+        keys = ['A_eff', 'A_std', 'n_std', 'h_eff', 'h_std']
+        results = dict.fromkeys(keys)
+        
         n_times = self._mmap.shape[0]
         n_refs = self.intervals.shape[1]
 
         # Get real reflections indexes
-        idxs = np.empty([n_times, self._cols, n_refs], dtype=np.int)
-        idxs[:] = -9999
+        heights = np.empty([n_times, self._cols, n_refs])
+        heights[:] = np.NaN
+        # signal + noise
+        s_plus_n = np.empty([n_times, self._cols, n_refs], np.complex)
+        s_plus_n[:] = np.NaN
+        # noise
+        noise = np.empty([n_times, self._cols, n_refs], np.complex)
+        noise[:] = np.NaN
         for i in range(n_times):  # by times number
             arr_abs, arr_c = self.getUnit(i)
             thr = self.getTheresholds(arr_abs)
 
             for j in range(self._cols):  # by frequencies
-                a = arr_abs[j, :]
-                idxs[i, j, :] = self.applyIntervalsAndTheresholds(
-                    self.intervals[j], thr[j], a)
+                # get indexes for reflections
+                idxs = self.applyIntervalsAndTheresholds(
+                    self.intervals[j], thr[j], arr_abs[j, :])
+                i_in = np.extract(idxs > 0, idxs)
+                i_to = np.nonzero(idxs > 0)[0]
 
-        # Get parameters for all frequencies
-        for i in range(self._cols):  # by frequencies
-            for j in range(n_refs):  # by reflections
-                i_times = np.extract(idxs[:, i, j] > 0, idxs[:, i, j])
-                heights = self._heights[i_times]
-                arr = arr_complex[i_times, i]
+                s_plus_n[i, j, i_to] = arr_c[j, i_in]
+                noise[i, j, :] = arr_c[j, -1]  # last point of heights
+
+                heights[i, j, i_to] = self._heights[i_in]
+
+        s_n_2 = np.nanmean(np.abs(s_plus_n)**2, 0)
+        n_2 = np.mean(np.abs(noise)**2, 0)
+
+        results['A_eff'] = np.sqrt( s_n_2 - n_2 )
+        results['A_std'] = np.nanstd(np.abs(s_plus_n), 0)
+        results['n_std'] = np.nanstd(np.abs(noise), 0)
+        results['h_eff'] = np.nanmean(heights, 0)
+        results['h_std'] = np.nanstd(heights, 0)
 
 
         return results
