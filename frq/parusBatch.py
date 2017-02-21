@@ -147,6 +147,14 @@ if __name__ == '__main__':
                         results['n_std'][i_frq, i_ref],
                         results['h_eff'][i_frq, i_ref],
                         results['h_std'][i_frq, i_ref]))
+
+            if results['counts'][i_frq]:
+                 cur.execute(
+                    'UPDATE amplitudes SET L_mean = ?, counts = ? '
+                    'WHERE ampl_file = ? AND ampl_frq = ? AND number = 1',
+                    (results['L_mean'][i_frq],
+                    results['counts'][i_frq],
+                    file_id, frq_id))
             i_frq += 1  # next frq number
 
         # Commit

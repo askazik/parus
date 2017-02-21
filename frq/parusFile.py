@@ -351,9 +351,9 @@ class parusFile(header):
         """True calculation file parameters.
         """
         # Output formatting
-        keys = ['A_eff', 'A_std', 'n_std', 'h_eff', 'h_std']
+        keys = ['A_eff', 'A_std', 'n_std', 'h_eff', 'h_std', 'L_mean', 'counts']
         results = dict.fromkeys(keys)
-        
+
         n_times = self._mmap.shape[0]
         n_refs = self.intervals.shape[1]
 
@@ -366,6 +366,8 @@ class parusFile(header):
         # noise
         noise = np.empty([n_times, self._cols, n_refs], np.complex)
         noise[:] = np.NaN
+        # noise
+        noise_std = np.zeros([n_times, self._cols])
         for i in range(n_times):  # by times number
             arr_abs, arr_c = self.getUnit(i)
             thr = self.getTheresholds(arr_abs)
@@ -382,15 +384,36 @@ class parusFile(header):
 
                 heights[i, j, i_to] = self._heights[i_in]
 
+                noise_std[i, j] = np.std(arr_c[j, -1])
+
         s_n_2 = np.nanmean(np.abs(s_plus_n)**2, 0)
         n_2 = np.mean(np.abs(noise)**2, 0)
 
         results['A_eff'] = np.sqrt( s_n_2 - n_2 )
         results['A_std'] = np.nanstd(np.abs(s_plus_n), 0)
+
         results['n_std'] = np.nanstd(np.abs(noise), 0)
         results['h_eff'] = np.nanmean(heights, 0)
         results['h_std'] = np.nanstd(heights, 0)
 
+        # Calculate of instant absorbtion
+        rho = np.empty([n_times, self._cols])
+        rho[:] = np.NaN
+        counts = np.zeros(self._cols)
+        for i in range(self._cols):  # by frequencies
+            i_times = np.nonzero(~np.isnan(np.real(s_plus_n[:,i,1])))[0]
+            n_std = noise_std[i_times, i]
+            counts[i] = i_times.size  # number of points
+            A1 = np.sqrt(
+                np.abs(s_plus_n[i_times, i, 0])**2 - n_std**2)
+            A2 = np.sqrt(
+                np.abs(s_plus_n[i_times, i, 1])**2 - n_std**2)
+            rho[i_times, i] = 2 * A2 / A1
+        rho_mean = np.nanmean(rho, 0)
+        L = 20 * np.log10(rho_mean)
+
+        results['L_mean'] = L
+        results['counts'] = counts
 
         return results
 

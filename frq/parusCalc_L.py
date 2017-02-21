@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # Create a connection and cursor to your database
     # if file not exist - create empty database
-    conn = sqlite3.connect('parus_old.sqlite')
+    conn = sqlite3.connect('parus.sqlite')
     cur = conn.cursor()
     # Номера файлов и частот для которых найдены два первых отражения.
     # amplitudes.n_sigma > 0 - условие на корректность данных
