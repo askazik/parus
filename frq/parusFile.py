@@ -272,16 +272,17 @@ class parusFile(header):
     def getThereshold(self, arr):
         """Get thereshold for array.
         """
-        # 0. Sort given np.array.
-        arrSorted = np.sort(arr, axis=0, kind='mergesort')
-        # 1. Get quartiles.
-        n = arrSorted.size
-        Q1 = np.amin((arrSorted[n//4], arrSorted[n//4-1]))
-        Q3 = np.amin((arrSorted[3*n//4], arrSorted[3*n//4-1]))
-        # 2. Get interval.
-        dQ = Q3 - Q1
-        # 3. Get top border of outliers. Search minor outliers.
-        thereshold = Q3 + 1.5 * dQ
+        # # 0. Sort given np.array.
+        # arrSorted = np.sort(arr, axis=0, kind='mergesort')
+        # # 1. Get quartiles.
+        # n = arrSorted.size
+        # Q1 = np.amin((arrSorted[n//4], arrSorted[n//4-1]))
+        # Q3 = np.amin((arrSorted[3*n//4], arrSorted[3*n//4-1]))
+        # # 2. Get interval.
+        # dQ = Q3 - Q1
+        # # 3. Get top border of outliers. Search minor outliers.
+        # thereshold = Q3 + 1.5 * dQ
+        thereshold = np.mean(arr) + 1.96 * np.std(arr)  # 5% below
 
         return thereshold
 
