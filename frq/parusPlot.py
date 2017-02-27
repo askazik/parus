@@ -80,8 +80,8 @@ class parusAmnimation(parusFile):
             'g-',
             label="Outliers thereshold")
 
-        avg = self.getAveragedLine(self.frqNumber)
-        avg_line = ax.plot(avg, self._heights)
+        # avg = self.getAveragedLine(self.frqNumber)
+        # avg_line = ax.plot(avg, self._heights)
 
     def plotFrequency(self, idTime, idFrq):
         """Plot data for given time and frequency numbers.
@@ -149,8 +149,9 @@ class parusAmnimation(parusFile):
 
     # draw function.  This is called sequentially
     def animate(self, i):
-        data = self.getUnitFrequency(i, self.frqNumber)
-        value = np.absolute(data)
+        data_abs, data_complex = self.getUnit(i)
+
+        value = data_abs[self.frqNumber, :]
         thereshold = self.getThereshold(value)
         self.line.set_xdata(value)
         self.thereshold.set_xdata(np.ones(self._heights.shape[0]) * thereshold)
