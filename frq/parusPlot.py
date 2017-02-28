@@ -10,6 +10,44 @@ import os
 from parusFile import parusFile
 
 
+def plotAmplitudes(ampls, dt, frqs, name):
+    """Plot amplitudes on subplots.
+
+    Keyword arguments:
+    ampls -- array of plotted amplitudes,
+    dt -- time step (s),
+    frqs -- frequencies (kHz),
+    name -- file name.
+    """
+
+    # Subplots sharing both x/y axes
+    shape = ampls.shape
+    times = range(shape[0]) * dt / 60  # time in minutes
+
+    fig, axs = plt.subplots(
+        nrows=shape[1], ncols=1, sharex=True, sharey=True)
+    for ax, i in zip(axs, range(shape[1])):
+        ax.grid(True)
+        for j in range(shape[2]):
+            ax.plot(times, np.abs(ampls[:, i, j]),
+                        label='{} ref.'.format(j))
+        # ax.set_title('{} kHz.'.format(frqs[i]))
+        ax.set_ylabel('{} kHz.'.format(frqs[i]))
+        ax.legend()
+
+    ax.set_xlabel('Time, min')
+
+    # Fine-tune figure; make subplots close to each other and hide x
+    # ticks for all but bottom plot.
+    fig.canvas.set_window_title('File {}.'.format(name))
+    fig.subplots_adjust(hspace=0)
+    plt.setp([a.get_xticklabels() for a in axs[:-1]], visible=False)
+    # plt.tight_layout()
+
+    plt.show()
+
+    return axs
+
 def plotLines(filename, lines, intervals, heights, frqs):
     """Plot array of lines on subplots.
 

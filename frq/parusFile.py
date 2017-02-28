@@ -444,3 +444,47 @@ class parusFile(header):
                     break
 
         return indexes
+
+    def SpectralCalculation(self):
+        """Spectral estimation.
+        """
+        # Output formatting
+        keys = ['signal', 'noise', 'h_eff', 'h_std']
+        results = dict.fromkeys(keys)
+
+        n_times = self._mmap.shape[0]
+        n_refs = self.intervals.shape[1]
+
+        # Get real reflections indexes
+        heights = np.empty([n_times, self._cols, n_refs])
+        heights[:] = np.NaN
+        # signal + noise
+        s_plus_n = np.empty([n_times, self._cols, n_refs], np.complex)
+        s_plus_n[:] = np.NaN
+        # noise
+        noise = np.empty([n_times, self._cols], np.complex)
+        noise[:] = np.NaN
+        # noise
+        noise_std = np.zeros([n_times, self._cols])
+        for i in range(n_times):  # by times number
+            arr_abs, arr_c = self.getUnit(i)
+
+            noise[i, :] = arr_c[:, -1]  # last point of heights
+            thr = self.getTheresholds(arr_abs)
+
+            for j in range(self._cols):  # by frequencies
+                # get indexes for reflections
+                idxs = self.applyIntervalsAndTheresholds(
+                    self.intervals[j], thr[j], arr_abs[j, :])
+                i_in = np.extract(idxs > 0, idxs)
+                i_to = np.nonzero(idxs > 0)[0]
+
+                s_plus_n[i, j, i_to] = arr_c[j, i_in]
+                heights[i, j, i_to] = self._heights[i_in]
+
+        results['signal'] = s_plus_n
+        results['noise'] = noise
+        #results['h_eff'] = np.nanmean(heights, 0)
+        #results['h_std'] = np.nanstd(heights, 0)
+
+        return results
