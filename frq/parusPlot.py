@@ -35,6 +35,13 @@ def plotAmplitudes(ampls, dt, frqs, name):
         ax.set_ylabel('{} kHz.'.format(frqs[i]))
         ax.legend()
 
+        # psd
+        # plt.subplot(211)
+        # plt.plot(t, s)
+        # plt.subplot(212)
+        # plt.psd(s, 512, 1/dt)
+
+
     ax.set_xlabel('Time, min')
 
     # Fine-tune figure; make subplots close to each other and hide x
