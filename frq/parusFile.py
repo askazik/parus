@@ -466,6 +466,9 @@ class parusFile(header):
         noise[:] = np.NaN
         # noise
         noise_std = np.zeros([n_times, self._cols])
+        # indexes
+        indexes = np.empty([n_times, self._cols, n_refs], dtype=np.int)
+        indexes[:] = -9999
 
         # 1. get only signal, noise = NaN
         for i in range(n_times):  # by times number
@@ -481,15 +484,26 @@ class parusFile(header):
                 i_in = np.extract(idxs > 0, idxs)
                 i_to = np.nonzero(idxs > 0)[0]
 
-                s_plus_n[i, j, i_to] = arr_c[j, i_in]
-                heights[i, j, i_to] = self._heights[i_in]
+                # s_plus_n[i, j, i_to] = arr_c[j, i_in]
+                # heights[i, j, i_to] = self._heights[i_in]
+                indexes[i, j, :] = idxs
 
-        # 2. put "bad signal" rather NaN
+        # 2. get indexes of NaN signal
         for i in range(self._cols):  # by frequencies
             for j in range(n_refs):  # by reflections
-                arrKey = heights[:, i, j]
-                indNotNaN, = np.nonzero(not np.isnan(arrKey))
+                indNotNaN, = np.nonzero(indexes[:, i, j] > 0)
+                indNaN, = np.nonzero(indexes[:, i, j] < 0)
+                if indNotNaN.size >= 1:
+                    indMean = np.rint(np.mean(indexes[indNotNaN, i, j]))
+                    indexes[indNaN, i, j] = indMean.astype(int)
 
+        # 3. set "bad signal" rather NaN
+        for i in range(n_times):  # by times number
+            arr_abs, arr_c = self.getUnit(i)
+
+            for j in range(self._cols):  # by frequencies
+                idxs = indexes[i, j, :]
+                s_plus_n[i, j, :] = arr_c[j, idxs]
 
         results['signal'] = s_plus_n
         results['noise'] = noise
