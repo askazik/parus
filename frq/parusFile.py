@@ -481,21 +481,33 @@ class parusFile(header):
                 # get indexes for reflections
                 idxs = self.applyIntervalsAndTheresholds(
                     self.intervals[j], thr[j], arr_abs[j, :])
-                i_in = np.extract(idxs > 0, idxs)
-                i_to = np.nonzero(idxs > 0)[0]
-
-                # s_plus_n[i, j, i_to] = arr_c[j, i_in]
-                # heights[i, j, i_to] = self._heights[i_in]
                 indexes[i, j, :] = idxs
 
         # 2. get indexes of NaN signal
         for i in range(self._cols):  # by frequencies
             for j in range(n_refs):  # by reflections
-                indNotNaN, = np.nonzero(indexes[:, i, j] > 0)
+                indNotNaN, = np.nonzero(indexes[:, i, j] >= 0)
                 indNaN, = np.nonzero(indexes[:, i, j] < 0)
-                if indNotNaN.size >= 1:
-                    indMean = np.rint(np.mean(indexes[indNotNaN, i, j]))
-                    indexes[indNaN, i, j] = indMean.astype(int)
+
+                if indNaN.size > 0:  # fill -9999 indexes
+
+                    indPrev = indNaN[0]
+                    for ind in indNaN:
+                        if ind == indPrev:  # next group
+                            continue
+
+                        if indPrev + 1 == ind:  # body of group
+                            indPrev = ind
+                            continue
+
+                        # ind is out from current group
+
+                        indMean = np.rint((indexes[indMin, i, j] +
+                            indexes[ind-1, i, j]) / 2)
+                        indexes[indPrev:ind, i, j] = indMean.astype(int)
+
+                        # set begin of new group
+                        indPrev = ind
 
         # 3. set "bad signal" rather NaN
         for i in range(n_times):  # by times number

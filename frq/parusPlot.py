@@ -26,14 +26,24 @@ def plotAmplitudes(ampls, dt, frqs, name):
 
     fig, axs = plt.subplots(
         nrows=shape[1], ncols=1, sharex=True, sharey=True)
+    fig_psd, axs_psd = plt.subplots(
+        nrows=shape[1], ncols=1, sharex=True, sharey=True)
     for ax, i in zip(axs, range(shape[1])):
         ax.grid(True)
         for j in range(shape[2]):
             ax.plot(times, np.abs(ampls[:, i, j]),
                         label='{} ref.'.format(j))
+    ax.set_xlabel('Time, min')
+
+    for ax, i in zip(axs_psd, range(shape[1])):
+        ax.grid(True)
+        for j in range(shape[2]):
+            ax.psd(ampls[:, i, j], 512, 1/dt,
+                        label='{} ref.'.format(j))
         # ax.set_title('{} kHz.'.format(frqs[i]))
         ax.set_ylabel('{} kHz.'.format(frqs[i]))
         ax.legend()
+    ax.set_xlabel('Frequency, Hz')
 
         # psd
         # plt.subplot(211)
@@ -41,16 +51,15 @@ def plotAmplitudes(ampls, dt, frqs, name):
         # plt.subplot(212)
         # plt.psd(s, 512, 1/dt)
 
-
-    ax.set_xlabel('Time, min')
-
     # Fine-tune figure; make subplots close to each other and hide x
     # ticks for all but bottom plot.
     fig.canvas.set_window_title('File {}.'.format(name))
     fig.subplots_adjust(hspace=0)
+    fig_psd.canvas.set_window_title('File {}.'.format(name))
+    fig_psd.subplots_adjust(hspace=0)
+
     plt.setp([a.get_xticklabels() for a in axs[:-1]], visible=False)
     # plt.tight_layout()
-
     plt.show()
 
     return axs
