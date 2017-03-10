@@ -14,7 +14,7 @@ def createParser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-d', '--directory',
-        default='c:\\!data\\E\\new_antenn')
+        default='c:\\!data\\E\\old_antenn')
 
     return parser
 

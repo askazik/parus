@@ -282,7 +282,7 @@ class parusFile(header):
         # dQ = Q3 - Q1
         # # 3. Get top border of outliers. Search minor outliers.
         # thereshold = Q3 + 1.5 * dQ
-        thereshold = np.mean(arr) + 1.96 * np.std(arr)  # 5% below
+        thereshold = np.mean(arr) + np.std(arr)
 
         return thereshold
 
@@ -459,7 +459,7 @@ class parusFile(header):
         heights = np.empty([n_times, self._cols, n_refs])
         heights[:] = np.NaN
         # signal + noise
-        s_plus_n = np.empty([n_times, self._cols, n_refs], np.complex)
+        s_plus_n = np.empty([n_times, self._cols, 2], np.complex)
         s_plus_n[:] = np.NaN
         # noise
         noise = np.empty([n_times, self._cols], np.complex)
@@ -467,7 +467,7 @@ class parusFile(header):
         # noise
         noise_std = np.zeros([n_times, self._cols])
         # indexes
-        indexes = np.empty([n_times, self._cols, n_refs], dtype=np.int)
+        indexes = np.empty([n_times, self._cols, 2], dtype=np.int)
         indexes[:] = -9999
 
         # 1. get only signal, noise = NaN
@@ -481,40 +481,42 @@ class parusFile(header):
                 # get indexes for reflections
                 idxs = self.applyIntervalsAndTheresholds(
                     self.intervals[j], thr[j], arr_abs[j, :])
-                indexes[i, j, :] = idxs
+                indexes[i, j, :] = idxs[0:2]  # only two reflections
 
         # 2. get indexes of NaN signal
         for i in range(self._cols):  # by frequencies
-            for j in range(n_refs):  # by reflections
-                indNotNaN, = np.nonzero(indexes[:, i, j] >= 0)
-                indNaN, = np.nonzero(indexes[:, i, j] < 0)
-
-                if indNaN.size > 0:  # fill -9999 indexes
-
-                    indPrev = indNaN[0]
-                    for ind in indNaN:
-                        if ind == indPrev:  # next group
+            for j in range(2):  # by reflections - only two reflections
+                indBeg = 0
+                indEnd = 0
+                key = 0
+                iarr = indexes[:, i, j]
+                for k in range(n_times):
+                    if iarr[k] < 0:
+                        if key == 0:
+                            indBeg = k
+                            key = 1
+                        indEnd = k
+                        if indEnd < n_times-1:
                             continue
 
-                        if indPrev + 1 == ind:  # body of group
-                            indPrev = ind
-                            continue
+                    if key == 1:
+                        if indBeg == 0:
+                            indMean = indexes[k, i, j]
+                        elif indEnd == n_times-1:
+                            indMean = indexes[indBeg-1, i, j]
+                        else:
+                            kBeg = indBeg - 1
+                            indMean = np.rint((indexes[kBeg, i, j] + indexes[k, i, j])/2)
 
-                        # ind is out from current group
-
-                        indMean = np.rint((indexes[indMin, i, j] +
-                            indexes[ind-1, i, j]) / 2)
-                        indexes[indPrev:ind, i, j] = indMean.astype(int)
-
-                        # set begin of new group
-                        indPrev = ind
+                        indexes[indBeg:indEnd+1, i, j] = indMean.astype(int)
+                        key = 0
 
         # 3. set "bad signal" rather NaN
         for i in range(n_times):  # by times number
             arr_abs, arr_c = self.getUnit(i)
 
             for j in range(self._cols):  # by frequencies
-                idxs = indexes[i, j, :]
+                idxs = indexes[i, j, 0:2]  # only two reflections
                 s_plus_n[i, j, :] = arr_c[j, idxs]
 
         results['signal'] = s_plus_n
