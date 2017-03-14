@@ -14,7 +14,7 @@ def createParser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-d', '--directory',
-        default='c:\\!data\\E\\old_antenn')
+        default='c:\\!data\\E\\old_antenn\\big')
 
     return parser
 
@@ -33,12 +33,20 @@ if __name__ == '__main__':
 
         # 2. Get amplitudes of reflections.
         A = pf.parusFile(name)
+        ave = A.getAveragedMeans()
+        pplt.plotAveragedLines(name, A.heights, A.frqs, ave)
+
         results = A.SpectralCalculation()
 
         # 3. Plot amplitudes for two reflections.
         signals = results['signal']
         noise = results['noise']
 
-        pplt.plotAmplitudes(signals[:, :, 0:2], A.dt, A.frqs, name)
+        power0, power1, Pnoise = pplt.plotAmplitudes(
+            signals[:, :, 0:2],
+            A.dt,
+            A.frqs,
+            name,
+            noise)
 
 # End of file.

@@ -10,7 +10,7 @@ import os
 from parusFile import parusFile
 
 
-def plotAmplitudes(ampls, dt, frqs, name):
+def plotAmplitudes(ampls, dt, frqs, name, noise):
     """Plot amplitudes on subplots.
 
     Keyword arguments:
@@ -20,6 +20,10 @@ def plotAmplitudes(ampls, dt, frqs, name):
     name -- file name.
     """
 
+    power0 = np.zeros(frqs.size)
+    power1 = np.zeros(frqs.size)
+    Pnoise = np.zeros(frqs.size)
+
     # Subplots sharing both x/y axes
     shape = ampls.shape
     times = range(shape[0]) * dt / 60  # time in minutes
@@ -28,28 +32,30 @@ def plotAmplitudes(ampls, dt, frqs, name):
         nrows=shape[1], ncols=1, sharex=True, sharey=True)
     fig_psd, axs_psd = plt.subplots(
         nrows=shape[1], ncols=1, sharex=True, sharey=True)
+
     for ax, i in zip(axs, range(shape[1])):
         ax.grid(True)
         for j in range(shape[2]):
             ax.plot(times, np.abs(ampls[:, i, j]),
                         label='{} ref.'.format(j))
+        ax.plot(times, np.abs(noise[:, i]), label='noise')
     ax.set_xlabel('Time, min')
 
     for ax, i in zip(axs_psd, range(shape[1])):
         ax.grid(True)
         for j in range(shape[2]):
-            ax.psd(ampls[:, i, j], 512, 1/dt,
-                        label='{} ref.'.format(j))
-        # ax.set_title('{} kHz.'.format(frqs[i]))
+            _Pxx = ax.psd(ampls[:, i, j], 512, 1/dt, label='{} ref.'.format(j))
+            if j == 0:
+                power0[i] = 10 * np.log10(np.amax(_Pxx[0]))
+            elif j == 1:
+                power1[i] = 10 * np.log10(np.amax(_Pxx[0]))
+
+        _Pxx = ax.psd(noise[:, i], 521, 1/dt, label='noise')
+        Pnoise[i] = 10 * np.log10(np.amax(_Pxx[0]))
+
         ax.set_ylabel('{} kHz.'.format(frqs[i]))
         ax.legend()
     ax.set_xlabel('Frequency, Hz')
-
-        # psd
-        # plt.subplot(211)
-        # plt.plot(t, s)
-        # plt.subplot(212)
-        # plt.psd(s, 512, 1/dt)
 
     # Fine-tune figure; make subplots close to each other and hide x
     # ticks for all but bottom plot.
@@ -62,7 +68,7 @@ def plotAmplitudes(ampls, dt, frqs, name):
     # plt.tight_layout()
     plt.show()
 
-    return axs
+    return power0, power1, Pnoise
 
 def plotLines(filename, lines, intervals, heights, frqs):
     """Plot array of lines on subplots.
@@ -91,6 +97,38 @@ def plotLines(filename, lines, intervals, heights, frqs):
             ax.axvline(intervals[i,j,0], color='r')
 
     ax.set_xlabel('Height, km')
+
+    # Fine-tune figure; make subplots close to each other and hide x
+    # ticks for all but bottom plot.
+    fig.canvas.set_window_title('File {}.'.format(filename))
+    fig.subplots_adjust(hspace=0)
+    plt.setp([a.get_xticklabels() for a in axs[:-1]], visible=False)
+
+    plt.show()
+
+    return axs
+
+def plotAveragedLines(filename, heights, frqs, lines):
+    """Plot array of lines on subplots.
+
+    Keyword arguments:
+    filename -- name of files where lines gettig from,
+    heights -- values of heights,
+    frqs -- values of frequencies,
+    lines -- averaged lines.
+    """
+
+    # Subplots sharing both x/y axes
+    n=frqs.size
+
+    fig, axs = plt.subplots(
+        nrows=1, ncols=n, sharex=True, sharey=True)
+    for ax, i in zip(axs, range(n)):
+        ax.grid(True)
+        ax.plot(lines[i, :], heights, label='{} kHz'.format(frqs[i]))
+        ax.legend()
+
+    ax.set_ylabel('Height, km')
 
     # Fine-tune figure; make subplots close to each other and hide x
     # ticks for all but bottom plot.
