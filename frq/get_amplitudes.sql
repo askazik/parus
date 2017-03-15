@@ -128,3 +128,23 @@ AND amplitudes.ampl_frq = frequencies.id_frq
 AND H > 80 AND L > 0 AND ampl_s > n_sigma
 ORDER BY
 frequency
+
+--- 15/03/2017
+SELECT
+amplitudes.ampl_file AS i_file,
+frequencies.frequency AS Frq,
+files.time AS Datetime,
+amplitudes.h0_eff AS H1,
+amplitudes.h1_eff AS H2,
+amplitudes.power0 AS P1, 
+amplitudes.power1 AS P2,
+amplitudes.Pnoise AS Pn,
+(amplitudes.power0 - amplitudes.power1) AS rho 
+FROM 
+files, amplitudes, frequencies
+WHERE 
+amplitudes.ampl_file = files.id_file
+AND amplitudes.ampl_frq = frequencies.id_frq
+AND amplitudes.power1 > amplitudes.Pnoise + 3
+AND amplitudes.power0 > 80
+AND (amplitudes.power0 - amplitudes.power1)  > 10
