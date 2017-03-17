@@ -116,7 +116,7 @@ class header(object):
 class parusIntervals(object):
     """Class for define of heights intervals."""
 
-    def __init__(self, nfrq=5, nref=4, dh=30, h1=85):
+    def __init__(self, nfrq=5, nref=2, dh=40, h1=95):
         """Init data unit.
 
         Keyword arguments:
@@ -251,11 +251,29 @@ class parusFile(header):
         """Calculate averaged means for all frequencies.
         """
         n_times = self._mmap.shape[0]
-        ave = self.getUnit(0)[0]  # initialize
+        cur = self.getUnit(0)[0]  # initialize
+        ave = cur
+        ave2 = cur ** 2
         for i in range(1, n_times):  # by times number
-            ave = (ave + self.getUnit(i)[0])/2
+            cur = self.getUnit(i)[0]
+            ave = (ave + cur)/2
+            ave2 = (ave2 + cur**2)/2
+        _ave2 = np.sqrt(ave2)
 
-        return ave
+        n_refs = self.intervals.shape[1]
+        heights = np.zeros([self._cols, n_refs])
+        amplitudes = np.zeros([self._cols, n_refs])
+        for i in range(self._cols):
+            for j in range(n_refs):
+                cur_interv = self.intervals[i, j]
+                hmin = cur_interv[0]
+                hmax = cur_interv[1]
+                ind_h, = np.nonzero((self._heights >= hmin) & (self._heights <= hmax))
+                i_max = np.argmax(_ave2[i, ind_h]) + ind_h[0]
+                heights[i,j] = self._heights[i_max]
+                amplitudes[i,j] = _ave2[i, i_max]
+
+        return ave, _ave2, heights, amplitudes
 
     def getSigma(self, ave_means):
         """Calculate sigma for all heights and frequencies.

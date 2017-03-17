@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Work with data file. Use a spectral algorithm.
+Control: http://space-weather.ru/index.php?page=ionogrammy
 """
 import os.path as path
 import argparse
@@ -18,7 +19,7 @@ def createParser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-d', '--directory',
-        default='c:\\!data\\E\\old_antenn\\big')
+        default='c:\\!data\\E\\old_antenn')
     parser.add_argument(
         '-f', '--file',
         default='parus_psd.sqlite')
@@ -60,8 +61,11 @@ if __name__ == '__main__':
 
         # 1. Get amplitudes of reflections.
         A = pf.parusFile(name)
-        # ave = A.getAveragedMeans()
-        # pplt.plotAveragedLines(name, A.heights, A.frqs, ave)
+        ave, ave2, _h, _a = A.getAveragedMeans()
+        _alog = 20*np.log10(_a)
+        _L = _alog[:,0] - _alog[:,1] - 6  # db
+        print(_L, _h[:,1]-_h[:,0])
+        pplt.plotAveragedLines(name, A.heights, A.frqs, ave, ave2)
 
         # 2. Save results in sqlite Database.
         # Fill file table.
@@ -109,6 +113,7 @@ if __name__ == '__main__':
             A.frqs,
             name,
             noise)
+        ref_count = int(input('Enter a reflections count [0 - default]: ') or '0')
 
         i_frq = 0
         for frq_id in frq_ids:
@@ -124,8 +129,8 @@ if __name__ == '__main__':
                     'INSERT INTO amplitudes '
                     '(ampl_file, ampl_frq, '
                     'power0, power1, Pnoise, '
-                    'h0_eff, h0_std, h1_eff, h1_std) '
-                    'VALUES(?,?,?,?,?,?,?,?,?)',
+                    'h0_eff, h0_std, h1_eff, h1_std, count) '
+                    'VALUES(?,?,?,?,?,?,?,?,?,?)',
                     (file_id, frq_id,
                     power0[i_frq],
                     power1[i_frq],
@@ -133,7 +138,8 @@ if __name__ == '__main__':
                     results['h_eff'][i_frq, 0],
                     results['h_std'][i_frq, 0],
                     results['h_eff'][i_frq, 1],
-                    results['h_std'][i_frq, 1]))
+                    results['h_std'][i_frq, 1],
+                    ref_count))
 
             i_frq += 1  # next frq number
 

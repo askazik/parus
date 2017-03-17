@@ -108,14 +108,15 @@ def plotLines(filename, lines, intervals, heights, frqs):
 
     return axs
 
-def plotAveragedLines(filename, heights, frqs, lines):
+def plotAveragedLines(filename, heights, frqs, lines, lines2):
     """Plot array of lines on subplots.
 
     Keyword arguments:
     filename -- name of files where lines gettig from,
     heights -- values of heights,
     frqs -- values of frequencies,
-    lines -- averaged lines.
+    lines -- averaged lines,
+    lines2 -- square averaged lines.
     """
 
     # Subplots sharing both x/y axes
@@ -126,6 +127,7 @@ def plotAveragedLines(filename, heights, frqs, lines):
     for ax, i in zip(axs, range(n)):
         ax.grid(True)
         ax.plot(lines[i, :], heights, label='{} kHz'.format(frqs[i]))
+        ax.plot(lines2[i, :], heights, label='sqrt')
         ax.legend()
 
     ax.set_ylabel('Height, km')

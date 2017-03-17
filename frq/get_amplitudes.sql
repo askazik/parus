@@ -148,3 +148,27 @@ AND amplitudes.ampl_frq = frequencies.id_frq
 AND amplitudes.power1 > amplitudes.Pnoise + 3
 AND amplitudes.power0 > 80
 AND (amplitudes.power0 - amplitudes.power1)  > 10
+
+--- 17/03/2017
+SELECT
+amplitudes.ampl_file AS i_file,
+frequencies.frequency AS Frq,
+files.time AS Datetime,
+amplitudes.h0_eff AS H1,
+amplitudes.h1_eff AS H2,
+amplitudes.h1_eff-amplitudes.h0_eff AS H,
+amplitudes.power0 AS P1, 
+amplitudes.power1 AS P2,
+amplitudes.Pnoise AS Pn,
+(amplitudes.power0 - amplitudes.power1 - 6) AS rho,
+amplitudes.count AS count
+FROM 
+files, amplitudes, frequencies
+WHERE 
+amplitudes.ampl_file = files.id_file
+AND amplitudes.ampl_frq = frequencies.id_frq
+AND amplitudes.power1 > amplitudes.Pnoise + 3 --- наблюдается превышение шума сигналом
+AND Datetime < '2016-12-07 09:00:00' --- измерение на старую антенну
+AND Frq >= 1400 --- всё, что более гирочастоты
+AND count < 9 --- реально наблюдаемые отражения
+AND count == 1 --- наблюдается два отражения
