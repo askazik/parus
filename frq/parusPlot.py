@@ -142,6 +142,35 @@ def plotAveragedLines(filename, heights, frqs, lines, lines2):
 
     return axs
 
+def plotAveragedLog10Lines(filename, heights, frqs, lines2):
+    """Plot array of lines on subplots.
+
+    Keyword arguments:
+    filename -- name of files where lines gettig from,
+    heights -- values of heights,
+    frqs -- values of frequencies,
+    lines2 -- square averaged lines.
+    """
+
+    # Subplots sharing both x/y axes
+    n=frqs.size
+    _ave2_log = 20*np.log10(lines2)
+
+    fig, axs = plt.subplots(
+        nrows=1, ncols=n, sharex=True, sharey=True)
+    for ax, i in zip(axs, range(n)):
+        ax.grid(True)
+        ax.set_xlabel('dB')
+        ax.set_title('{} kHz'.format(frqs[i]))
+        ax.plot(_ave2_log[i, :], heights)
+        if not i:
+            ax.set_ylabel('Height, km')
+
+    fig.canvas.set_window_title('File {}, amplitudes in (dB).'.format(filename))
+    fig.subplots_adjust(hspace=0)
+
+    plt.show()
+
 class parusAmnimation(parusFile):
     """Animation class for multyfrequencies data.
     """
