@@ -43,8 +43,12 @@ class main(tk.Frame):
             label="Папка...",
             command=self.askDirectory) #формируется список команд пункта меню
         fm.add_separator()
-        fm.add_command(label="Открыть...")
-        fm.add_command(label="Сохранить...")
+        fm.add_command(
+            label="Открыть файл выбора...",
+            command=self.openSelected)
+        fm.add_command(
+            label="Сохранить файл выбора...",
+            command=self.saveSelected)
         fm.add_separator()
         fm.add_command(
             label="Выход",
@@ -143,7 +147,7 @@ class main(tk.Frame):
             ftime = datetime(*A.time[:6])
             fsize = os.stat(name).st_size // 1024  # Kb
 
-            out_dict[i] = [A.name, ftime, fsize, False]
+            out_dict[i] = [A.name, ftime, fsize, 0]
             i += 1
 
         return out_dict
@@ -184,10 +188,13 @@ class main(tk.Frame):
             label="Усреднение по выборке",
             command=self.onAverage)
         self.popup_menu.add_command(
+            label="Амплитуды и спектры отражений",
+            command=self.onAmplitude)
+        self.popup_menu.add_command(
             label="Просмотр в реальном времени",
             command=self.onRealView)
         self.popup_menu.add_command(
-            label="Выбор файла",
+            label="Отметка выбора",
             command=self.onSelect)
         self.pack()
 
@@ -221,13 +228,89 @@ class main(tk.Frame):
         pass
 
     def onSelect(self):
-        pass
+        iid = ttk.Treeview.focus(self.tree)
+        item = self.tree.item(iid)
+        selected = self.tree.item(iid).get('values')[-1]
+        if selected == 0:
+            selected = 1
+        elif selected == 1:
+            selected = 0
+
+        self.tree.set(iid, column=3, value=selected)
 
     def cursor(self):
+        # change cursor mode
         if not self.master.cget('cursor') == '':
             self.master.config(cursor='')
         else:
             self.master.config(cursor='watch')
+
+    def getNowFileName(self):
+        _dt = datetime.now()
+        _s = _dt.strftime('%Y-%m-%d_%H-%M-%S') + '.sel'
+        return _s
+
+    def saveSelected(self):
+
+        # get file name for save
+        ifile = self.getNowFileName()
+        idir = self.directory
+        title = 'Сохранить выбор в файл...'
+        types = [('Select files', '*.sel'), ('All files', '*')]
+        filename = tkfd.asksaveasfilename(
+            filetypes=types,
+            initialdir=idir,
+            initialfile=ifile,
+            title=title)
+        if not filename: return
+
+        # save selections
+        f = open(filename, 'w')
+        for child in self.tree.get_children():
+            _dict = self.tree.item(child)["values"]
+            if _dict[-1]:
+                try:
+                    f.write(_dict[0] + '\n')
+                except EOFError:
+                    break
+        f.close()
+
+    def openSelected(self):
+        # get file name for save
+        idir = self.directory
+        title = 'Извлечь выбор из файла...'
+        types = [('Select files', '*.sel'), ('All files', '*')]
+        filename = tkfd.askopenfilename(
+            filetypes=types,
+            initialdir=idir,
+            title=title)
+        if not filename: return
+
+        # return selections
+        f = open(filename, 'r')
+        for lineN in f:
+            line = lineN.strip('\n')
+            for child in self.tree.get_children():
+                _dict = self.tree.item(child)["values"]
+                if line == _dict[0]:
+                    self.tree.set(child, column=3, value=1)
+
+        f.close()
+
+    def onAmplitude(self):
+        name = path.join(self.directory, self.cur_fname)
+        A = pf.parusFile(name)
+
+        results = A.SpectralCalculation()
+        # Plot amplitudes for two reflections.
+        signals = results['signal']
+        noise = results['noise']
+        power0, power1, Pnoise = pplt.plotAmplitudes(
+            signals[:, :, 0:2],
+            A.dt,
+            A.frqs,
+            name,
+            noise)
 
 # Проверочная программа
 if __name__ == '__main__':
