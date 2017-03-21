@@ -18,24 +18,34 @@ import parusFile as pf
 import parusPlot as pplt
 
 # класс родительских окон
-class main(tk.Frame):
-    def __init__(self, master):
-        tk.Frame.__init__(self, master)
-        self.master = master
-        self.master.title('Аггрегатор процедур обработки измерений')
-        self.master.geometry('500x650+850+0')
+class Application(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.title('Аггрегатор процедур обработки измерений')
+
+        # set main windows geometry
+        # get screen width and height
+        ws = self.winfo_screenwidth() # width of the screen
+        hs = self.winfo_screenheight() # height of the screen
+        w = 500 # width for the Tk root
+        h = hs - 100 # height for the Tk root
+
+        # calculate x and y coordinates for the Tk root window
+        x = ws - w - 20
+        y = 0
+
+        # set the dimensions of the screen and where it is placed
+        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
 
         self.menuCreate()
         self.initPopupMenu()
 
-        self.initGrid(self.master)
+        self.initGrid()
         self.askDirectory()
 
-        self.master.mainloop()
-
     def menuCreate(self):
-        m = tk.Menu(root) #создается объект Меню на главном окне
-        root.config(menu=m) #окно конфигурируется с указанием меню для него
+        m = tk.Menu(self) #создается объект Меню на главном окне
+        self.config(menu=m) #окно конфигурируется с указанием меню для него
 
         fm = tk.Menu(m) #создается пункт меню с размещением на основном меню (m)
         m.add_cascade(label="Файл", menu=fm) #пункт располагается на основном меню (m)
@@ -82,8 +92,8 @@ class main(tk.Frame):
             label='О программе',
             command=self.about)
 
-    def initGrid(self, parent):
-        f = ttk.Frame(parent)
+    def initGrid(self):
+        f = ttk.Frame(self)
         f.pack(side=tk.TOP, fill=tk.BOTH, expand=tk.Y)
 
         # create the tree and scrollbars
@@ -131,7 +141,7 @@ class main(tk.Frame):
         # Button-3 is right click on windows
         self.tree.bind("<Button-3>", self.onTreePopup)
         # Button-1 double click
-        self.tree.bind("<Double-1>", self.onDoubleClick)
+        self.tree.bind("<Double-Button-1>", self.onDoubleClick)
 
 
     def _build_data_for_directory(self, ext):
@@ -162,10 +172,10 @@ class main(tk.Frame):
             self.tree.insert('', tk.END, text='%3d'%num, values=item)
 
     def close_win(self):
-        self.master.destroy()
+        self.destroy()
 
     def about(self):
-        win = tk.Toplevel(self.master)
+        win = tk.Toplevel(self)
         lab = tk.Label(win,text="Это просто программа-тест \n меню в Tkinter")
         lab.pack()
 
@@ -179,11 +189,13 @@ class main(tk.Frame):
             return
         else:
             self.directory = path
+            self.cursor()
             cur_dict = self._build_data_for_directory('*.frq')
+            self.cursor()
             self._populate_tree(cur_dict)
 
     def initPopupMenu(self):
-        self.popup_menu = tk.Menu(self.master, tearoff=0)
+        self.popup_menu = tk.Menu(self, tearoff=0)
         self.popup_menu.add_command(
             label="Усреднение по выборке",
             command=self.onAverage)
@@ -196,14 +208,13 @@ class main(tk.Frame):
         self.popup_menu.add_command(
             label="Отметка выбора",
             command=self.onSelect)
-        self.pack()
 
     def selectGridItem(self, e):
         # select row under mouse
         iid = self.tree.identify_row(e.y)
         if iid:
             # mouse pointer over item
-            self.tree.selection_set(iid)
+            #self.tree.selection_set(iid)
             item = self.tree.item(iid)
             self.cur_fname = item.get('values')[0]
 
@@ -215,14 +226,12 @@ class main(tk.Frame):
         self.selectGridItem(e)
         self.onAverage()
 
-    def plotAveraged(self, fname):
-        name = path.join(self.directory, fname)
+    def onAverage(self):
+        name = path.join(self.directory, self.cur_fname)
         A = pf.parusFile(name)
         ave, ave2, _h, _a = A.getAveragedMeans()
+        print(_h)
         pplt.plotAveragedLog10Lines(name, A.heights, A.frqs, ave2)
-
-    def onAverage(self):
-        self.plotAveraged(self.cur_fname)
 
     def onRealView(self):
         pass
@@ -240,10 +249,10 @@ class main(tk.Frame):
 
     def cursor(self):
         # change cursor mode
-        if not self.master.cget('cursor') == '':
-            self.master.config(cursor='')
+        if not self.cget('cursor') == '':
+            self.config(cursor='')
         else:
-            self.master.config(cursor='watch')
+            self.config(cursor='watch')
 
     def getNowFileName(self):
         _dt = datetime.now()
@@ -315,5 +324,5 @@ class main(tk.Frame):
 # Проверочная программа
 if __name__ == '__main__':
     #создание окна
-    root = tk.Tk()
-    main(root)
+    app = Application()
+    app.mainloop()
