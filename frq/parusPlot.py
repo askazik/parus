@@ -68,6 +68,10 @@ def plotAmplitudes(ampls, dt, frqs, name, noise):
     # plt.tight_layout()
     plt.show()
 
+    print(power0)
+    print(power1)
+    print(Pnoise)
+
     return power0, power1, Pnoise
 
 def plotLines(filename, lines, intervals, heights, frqs):

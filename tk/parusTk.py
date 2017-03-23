@@ -11,6 +11,8 @@ import tkinter.font as tkfont
 import tkinter.ttk as ttk
 import tkinter.filedialog as tkfd
 
+import numpy as np
+
 # используем наработки по теме
 import sys
 sys.path.append('../frq/')
@@ -202,9 +204,9 @@ class Application(tk.Tk):
         self.popup_menu.add_command(
             label="Амплитуды и спектры отражений",
             command=self.onAmplitude)
-        self.popup_menu.add_command(
-            label="Просмотр в реальном времени",
-            command=self.onRealView)
+        # self.popup_menu.add_command(
+        #     label="Просмотр в реальном времени",
+        #     command=self.onRealView)
         self.popup_menu.add_command(
             label="Отметка выбора",
             command=self.onSelect)
@@ -229,8 +231,11 @@ class Application(tk.Tk):
     def onAverage(self):
         name = path.join(self.directory, self.cur_fname)
         A = pf.parusFile(name)
-        ave, ave2, _h, _a = A.getAveragedMeans()
+        ave, ave2, _h, _a_c = A.getAveragedMeans()
+        _a = np.abs(_a_c)
         print(_h)
+        print(20*np.log10(_a))
+
         pplt.plotAveragedLog10Lines(name, A.heights, A.frqs, ave2)
 
     def onRealView(self):
