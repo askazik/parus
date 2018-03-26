@@ -1,4 +1,6 @@
 /Debug
+/venv
+/.idea
 /frq/__pycache__
 P14X3M01.HEX
 *.dll
